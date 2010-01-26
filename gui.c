@@ -21,7 +21,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 26 Jan 2010 18:47:38 EET too
+ * Last modified: Tue 26 Jan 2010 20:07:18 EET too
  */
 
 #if NOTMAEMO
@@ -36,6 +36,7 @@
 #endif
 
 enum { false = 0, true = 1 } bool;
+#define null ((void*)0)
 
 /* http://talk.maemo.org/showthread.php?p=461531 */
 
@@ -93,6 +94,11 @@ void drawstuff(GdkDrawable * drawable)
     gdk_gc_set_rgb_fg_color(W.gc_black, &color);
 }
 
+void save_and_quit(void)
+{
+    gtk_main_quit();
+}
+
 void buildgui(void)
 {
     /* Create the main window */
@@ -102,17 +108,21 @@ void buildgui(void)
     GtkWidget * mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
+    gtk_window_set_title(GTK_WINDOW(mainwin), "Thumb Sudoku");
+    g_signal_connect(G_OBJECT(mainwin), "delete_event",
+                     G_CALLBACK(save_and_quit), null);
+
     GtkWidget * vbox = gtk_vbox_new(false, 5);
-    gtk_container_add(mainwin, vbox);
+    gtk_container_add(GTK_CONTAINER(mainwin), vbox);
 
     GtkWidget * label = gtk_label_new("message");
-    gtk_box_pack_start(vbox, label, false, false, 9);
+    gtk_box_pack_start(GTK_BOX(vbox), label, false, false, 9);
 
     GtkWidget * da = gtk_drawing_area_new();
     gtk_widget_set_size_request(da, 480, 600);
     /* needed for da->window to exist */
     gtk_widget_show(da);
-    gtk_box_pack_start(vbox, da, false, false, 9);
+    gtk_box_pack_start(GTK_BOX(vbox), da, false, false, 9);
 
     /* Show the application window */
     gtk_widget_show_all (mainwin);
