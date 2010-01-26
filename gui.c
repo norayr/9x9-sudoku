@@ -21,7 +21,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 26 Jan 2010 20:07:18 EET too
+ * Last modified: Tue 26 Jan 2010 21:11:26 EET too
  */
 
 #if NOTMAEMO
@@ -80,6 +80,10 @@ struct {
     GdkGC * gc_black;
 } W;
 
+#define DA_HEIGHT 640
+#define DA_WIDTH 480
+
+
 void drawstuff(GdkDrawable * drawable)
 {
     W.gc_black = gdk_gc_new(drawable);
@@ -92,7 +96,53 @@ void drawstuff(GdkDrawable * drawable)
     gdk_gc_set_rgb_fg_color(W.gc_red, &color);
     color.red = 0;
     gdk_gc_set_rgb_fg_color(W.gc_black, &color);
+
 }
+
+gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
+{
+    (void)e; (void)user_data;
+
+    int i;
+    int j;
+
+#if NOTMAEMO
+    gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
+#endif
+
+    for (i = 0; i < 9; i++) {
+	for (j = 0; j < 9; j++) {
+	    int x = 4 + i * 52 + 3 * (i / 3);
+	    int y = 4 + j * 52 + 3 * (j / 3);
+
+	    gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 50, 50);
+	}
+    }
+
+    for (i = 0; i < 2; i++)
+	for (j = 0; j < 5; j++) {
+	    int x = 64 + j * 72;
+	    int y = 490 + i * 72;
+
+	    gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 64, 64);
+
+	}
+    printf("exposed\n");
+    return true;
+}
+
+void darea_realize(GtkWidget * w, gpointer user_data)
+{
+    (void)user_data;
+    drawstuff(w->window);
+
+    printf("realized\n");
+
+    gtk_signal_connect(GTK_OBJECT(w), "expose-event",
+		       GTK_SIGNAL_FUNC(darea_expose), null);
+}
+
+
 
 void save_and_quit(void)
 {
@@ -119,9 +169,11 @@ void buildgui(void)
     gtk_box_pack_start(GTK_BOX(vbox), label, false, false, 9);
 
     GtkWidget * da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(da, 480, 600);
+    gtk_widget_set_size_request(da, DA_WIDTH, DA_HEIGHT);
     /* needed for da->window to exist */
     gtk_widget_show(da);
+    gtk_signal_connect(GTK_OBJECT(da), "realize",
+		       GTK_SIGNAL_FUNC(darea_realize), null);
     gtk_box_pack_start(GTK_BOX(vbox), da, false, false, 9);
 
     /* Show the application window */
