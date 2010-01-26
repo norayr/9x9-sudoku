@@ -21,7 +21,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 26 Jan 2010 21:11:26 EET too
+ * Last modified: Tue 26 Jan 2010 22:01:01 EET too
  */
 
 #if NOTMAEMO
@@ -124,10 +124,18 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	    int x = 64 + j * 72;
 	    int y = 490 + i * 72;
 
-	    gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 64, 64);
+	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
 
 	}
     printf("exposed\n");
+    return true;
+}
+
+gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
+{
+    (void)w; (void)ud;
+
+    printf("buttonpress: %d %d\n", (int)e->x, (int)e->y);
     return true;
 }
 
@@ -136,10 +144,16 @@ void darea_realize(GtkWidget * w, gpointer user_data)
     (void)user_data;
     drawstuff(w->window);
 
+    gtk_widget_add_events(w, GDK_BUTTON_PRESS_MASK);
+
     printf("realized\n");
 
     gtk_signal_connect(GTK_OBJECT(w), "expose-event",
 		       GTK_SIGNAL_FUNC(darea_expose), null);
+
+    gtk_signal_connect(GTK_OBJECT(w), "button-press-event",
+		       GTK_SIGNAL_FUNC(darea_button_press), null);
+
 }
 
 
