@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Thu 28 Jan 2010 20:50:06 EET too
+ * Last modified: Thu 28 Jan 2010 21:26:46 EET too
  */
 
 #if NOTMAEMO
@@ -81,7 +81,7 @@ struct {
     GdkGC * gc_black;
 } W;
 
-#define DA_HEIGHT 640
+#define DA_HEIGHT 700
 #define DA_WIDTH 480
 
 
@@ -113,8 +113,8 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     for (i = 0; i < 9; i++) {
 	for (j = 0; j < 9; j++) {
-	    int x = 4 + i * 52 + 3 * (i / 3);
-	    int y = 4 + j * 52 + 3 * (j / 3);
+	    int x = 00 + 4 + i * 52 + 3 * (i / 3);
+	    int y = 50 + 4 + j * 52 + 3 * (j / 3);
 
 	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
 			       tile50_pixel_data, 150);
@@ -125,7 +125,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     for (i = 0; i < 2; i++)
 	for (j = 0; j < 5; j++) {
 	    int x = 64 + j * 72;
-	    int y = 490 + i * 72;
+	    int y = 50 + 490 + i * 72;
 
 	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
 
@@ -179,11 +179,13 @@ void buildgui(void)
     g_signal_connect(G_OBJECT(mainwin), "delete_event",
                      G_CALLBACK(save_and_quit), null);
 
+#if 0
     GtkWidget * vbox = gtk_vbox_new(false, 5);
     gtk_container_add(GTK_CONTAINER(mainwin), vbox);
 
     GtkWidget * label = gtk_label_new("message");
     gtk_box_pack_start(GTK_BOX(vbox), label, false, false, 9);
+#endif
 
     GtkWidget * da = gtk_drawing_area_new();
     gtk_widget_set_size_request(da, DA_WIDTH, DA_HEIGHT);
@@ -191,7 +193,11 @@ void buildgui(void)
     gtk_widget_show(da);
     gtk_signal_connect(GTK_OBJECT(da), "realize",
 		       GTK_SIGNAL_FUNC(darea_realize), null);
+#if 0
     gtk_box_pack_start(GTK_BOX(vbox), da, false, false, 9);
+#else
+    gtk_container_add(GTK_CONTAINER(mainwin), da);
+#endif
 
     /* Show the application window */
     gtk_widget_show_all (mainwin);
