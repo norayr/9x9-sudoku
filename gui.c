@@ -1,14 +1,13 @@
 #if 0 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*-
- set -e; TRG=`basename $0 .c`; rm -f "$TRG"
+ set -e
  WARN="-Wall -Wno-long-long -Wstrict-prototypes -pedantic"
  WARN="$WARN -Wcast-align -Wpointer-arith " # -Wfloat-equal #-Werror
  WARN="$WARN -W -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
  case $1 in '') set x -O2 ### set x -ggdb;
 	shift ;; esac;
- FLAGS=`pkg-config --cflags --libs hildon-1 || :`
- case $FLAGS in '') FLAGS=`pkg-config --cflags --libs gtk+-2.0`\ -DNOTMAEMO ;;
- esac
- set -x; ${CC:-gcc} -std=gnu99 $WARN "$@" -o "$TRG" "$0" $FLAGS
+ FLAGS=`pkg-config --cflags hildon-1` || \
+ FLAGS=`pkg-config --cflags gtk+-2.0`\ -DNOTMAEMO
+ set -x; ${CC:-gcc} -c -std=gnu99 $WARN "$@" "$0" $FLAGS
  exit $?
  */
 #endif
@@ -21,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 26 Jan 2010 22:01:01 EET too
+ * Last modified: Thu 28 Jan 2010 20:50:06 EET too
  */
 
 #if NOTMAEMO
@@ -34,6 +33,8 @@
 #include <hildon/hildon-gtk.h>
 #include <hildon/hildon-main.h>
 #endif
+
+#include "tile50.h"
 
 enum { false = 0, true = 1 } bool;
 #define null ((void*)0)
@@ -115,7 +116,9 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	    int x = 4 + i * 52 + 3 * (i / 3);
 	    int y = 4 + j * 52 + 3 * (j / 3);
 
-	    gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 50, 50);
+	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
+			       tile50_pixel_data, 150);
+	    //gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 50, 50);
 	}
     }
 
