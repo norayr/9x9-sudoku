@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Thu 28 Jan 2010 21:26:46 EET too
+ * Last modified: Thu 28 Jan 2010 22:34:25 EET too
  */
 
 #if NOTMAEMO
@@ -81,7 +81,7 @@ struct {
     GdkGC * gc_black;
 } W;
 
-#define DA_HEIGHT 700
+#define DA_HEIGHT 744
 #define DA_WIDTH 480
 
 
@@ -125,7 +125,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     for (i = 0; i < 2; i++)
 	for (j = 0; j < 5; j++) {
 	    int x = 64 + j * 72;
-	    int y = 50 + 490 + i * 72;
+	    int y = 50 + 520 + i * 72;
 
 	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
 
