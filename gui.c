@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 29 Jan 2010 23:45:10 EET too
+ * Last modified: Sat 30 Jan 2010 00:01:58 EET too
  */
 
 #include <string.h>
@@ -222,21 +222,21 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
 	    if (i == 6) {
 		pango_layout_set_font_description (W.layout, W.fd3);
-		draw_char(x + 15, y + 6, j + '1');
+		draw_char(x + 15, y + 7, j + '1');
 	    }
 	    else {
 		pango_layout_set_font_description (W.layout, W.fd1);
-		draw_char(x + 7, y + 1, '1');
+		draw_char(x + 6, y + 1, '1');
 		draw_char(x + 20, y + 1, '2');
-		draw_char(x + 33, y + 1, '3');
+		draw_char(x + 34, y + 1, '3');
 
-		draw_char(x + 7, y + 16, '4');
+		draw_char(x + 6, y + 16, '4');
 		draw_char(x + 20, y + 16, '5');
-		draw_char(x + 33, y + 16, '6');
+		draw_char(x + 34, y + 16, '6');
 
-		draw_char(x + 7, y + 31, '7');
+		draw_char(x + 6, y + 31, '7');
 		draw_char(x + 20, y + 31, '8');
-		draw_char(x + 33, y + 31, '9');
+		draw_char(x + 34, y + 31, '9');
 	    }
 	}
     }
