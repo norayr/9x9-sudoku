@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 29 Jan 2010 18:16:07 EET too
+ * Last modified: Fri 29 Jan 2010 19:04:22 EET too
  */
 
 #include <string.h>
@@ -45,9 +45,8 @@ enum { false = 0, true = 1 } bool;
 #if MAEMO
 gboolean is_portrait(void)
 {
-    GdkScreen * screen = gdk_screen_get_default();
-    int width = gdk_screen_get_width(screen);
-    int height = gdk_screen_get_height(screen);
+    int width = gdk_screen_get_width(W.screen);
+    int height = gdk_screen_get_height(W.screen);
 
     return width < height;
 }
@@ -91,6 +90,13 @@ struct {
     GdkGC * gc_red;
     GdkGC * gc_white;
     GdkGC * gc_black;
+
+    PangoFontDescription * fd1;
+    PangoFontDescription * fd2;
+    PangoFontDescription * fd3;
+    GdkScreen * screen;
+    PangoLayout * layout;
+    PangoRenderer * renderer;
 } W;
 
 #define DA_HEIGHT 744
@@ -137,20 +143,30 @@ void init_table(void)
     }
 }
 
-
-void drawstuff(GdkDrawable * drawable)
+void drawstuff(GtkWidget * widget)
 {
+    GdkDrawable * drawable = widget->window;
+
     W.gc_black = gdk_gc_new(drawable);
     W.gc_white = gdk_gc_new(drawable);
     W.gc_red = gdk_gc_new(drawable);
 
-    GdkColor color = { .red = 32768, .green = 32768, .blue  = 65535 };
+    GdkColor color = { .red = 32768, .green = 32768, .blue = 65535 };
     gdk_gc_set_rgb_fg_color(W.gc_white, &color);
     color.green = color.blue = 0;
     gdk_gc_set_rgb_fg_color(W.gc_red, &color);
     color.red = 0;
     gdk_gc_set_rgb_fg_color(W.gc_black, &color);
 
+    W.screen = gdk_screen_get_default();
+    W.renderer = gdk_pango_renderer_get_default(W.screen);
+    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), drawable);
+
+    W.layout = gtk_widget_create_pango_layout(widget, "");
+
+    W.fd1 = pango_font_description_from_string("Monospace bold 12");
+    W.fd2 = pango_font_description_from_string("Monospace bold 24");
+    W.fd3 = pango_font_description_from_string("Monospace bold 36");
 }
 
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
@@ -186,6 +202,16 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
 
 	}
+
+    pango_layout_set_font_description (W.layout, W.fd3);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_white);
+
+    pango_layout_set_text (W.layout, "foo", 3);
+
+    pango_renderer_draw_layout (W.renderer, W.layout,
+				300 * PANGO_SCALE,
+				300 * PANGO_SCALE);
+
     printf("exposed\n");
     return true;
 }
@@ -229,7 +255,7 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 void darea_realize(GtkWidget * w, gpointer user_data)
 {
     (void)user_data;
-    drawstuff(w->window);
+    drawstuff(w);
 
     gtk_widget_add_events(w, GDK_BUTTON_PRESS_MASK);
 
