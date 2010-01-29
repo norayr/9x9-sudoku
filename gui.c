@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 29 Jan 2010 19:04:22 EET too
+ * Last modified: Fri 29 Jan 2010 23:45:10 EET too
  */
 
 #include <string.h>
@@ -37,6 +37,8 @@
 #endif
 
 #include "tile50.h"
+#include "up64.h"
+#include "down64.h"
 
 enum { false = 0, true = 1 } bool;
 #define null ((void*)0)
@@ -72,7 +74,7 @@ struct {
 	gint16 x;
 	gint16 y;
 	gint8 state;
-	gint8 value;
+	char value;
     } buttons[5][2];
 
     struct {
@@ -94,6 +96,7 @@ struct {
     PangoFontDescription * fd1;
     PangoFontDescription * fd2;
     PangoFontDescription * fd3;
+    PangoFontDescription * fd4;
     GdkScreen * screen;
     PangoLayout * layout;
     PangoRenderer * renderer;
@@ -133,6 +136,7 @@ void init_table(void)
 
 	    G.buttons[i][j].x = x;
 	    G.buttons[i][j].y = y;
+	    G.buttons[i][j].value = '1' + i + 5 * j;
 	    if (i == 0) {
 		G.blimits_y[j].up = y + 1;
 		G.blimits_y[j].down = y + 62;
@@ -141,9 +145,10 @@ void init_table(void)
 	G.blimits_x[i].left = x + 1;
 	G.blimits_x[i].right = x + 62;
     }
+    G.buttons[4][1].value = ' ';
 }
 
-void drawstuff(GtkWidget * widget)
+void init_draw(GtkWidget * widget)
 {
     GdkDrawable * drawable = widget->window;
 
@@ -165,8 +170,28 @@ void drawstuff(GtkWidget * widget)
     W.layout = gtk_widget_create_pango_layout(widget, "");
 
     W.fd1 = pango_font_description_from_string("Monospace bold 12");
-    W.fd2 = pango_font_description_from_string("Monospace bold 24");
-    W.fd3 = pango_font_description_from_string("Monospace bold 36");
+    W.fd2 = pango_font_description_from_string("Monospace bold 18");
+    W.fd3 = pango_font_description_from_string("Monospace bold 24");
+    W.fd4 = pango_font_description_from_string("Monospace bold 36");
+}
+
+void render_text(int x, int y, PangoFontDescription * fd, GdkGC * gc, char * t)
+{
+    pango_layout_set_font_description (W.layout, fd);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), gc);
+
+    pango_layout_set_text (W.layout, t, strlen(t));
+
+    pango_renderer_draw_layout (W.renderer, W.layout,
+				x * PANGO_SCALE, y * PANGO_SCALE);
+}
+
+void draw_char(int x, int y, char c)
+{
+    pango_layout_set_text (W.layout, &c, 1);
+
+    pango_renderer_draw_layout (W.renderer, W.layout,
+				x * PANGO_SCALE, y * PANGO_SCALE);
 }
 
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
@@ -183,6 +208,9 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
 
+    pango_layout_set_font_description (W.layout, W.fd1);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+
     for (i = 0; i < 9; i++) {
 	for (j = 0; j < 9; j++) {
 	    int x = G.table[i][j].x;
@@ -191,26 +219,55 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
 			       tile50_pixel_data, 150);
 	    //gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 50, 50);
+
+	    if (i == 6) {
+		pango_layout_set_font_description (W.layout, W.fd3);
+		draw_char(x + 15, y + 6, j + '1');
+	    }
+	    else {
+		pango_layout_set_font_description (W.layout, W.fd1);
+		draw_char(x + 7, y + 1, '1');
+		draw_char(x + 20, y + 1, '2');
+		draw_char(x + 33, y + 1, '3');
+
+		draw_char(x + 7, y + 16, '4');
+		draw_char(x + 20, y + 16, '5');
+		draw_char(x + 33, y + 16, '6');
+
+		draw_char(x + 7, y + 31, '7');
+		draw_char(x + 20, y + 31, '8');
+		draw_char(x + 33, y + 31, '9');
+	    }
 	}
     }
+
+    pango_layout_set_font_description (W.layout, W.fd2);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
 
     for (i = 0; i < 5; i++)
 	for (j = 0; j < 2; j++) {
 	    int x = G.buttons[i][j].x;
 	    int y = G.buttons[i][j].y;
 
-	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
+	    int ox, oy, pd;
+	    if (i == 3) {
+		pango_layout_set_font_description (W.layout, W.fd2);
+		pd = down64_pixel_data;
+		ox = x + 24; oy = y + 18;
+	    }
+	    else {
+		pango_layout_set_font_description (W.layout, W.fd4);
+		pd = up64_pixel_data;
+		ox = x + 18; oy = y + 4;
+	    }
 
+	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 64, 64, 0,
+			       pd, 192);
+
+	    //gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
+	    draw_char(ox, oy, G.buttons[i][j].value);
+	    //pango_layout_set_font_description (W.layout, W.fd3);
 	}
-
-    pango_layout_set_font_description (W.layout, W.fd3);
-    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_white);
-
-    pango_layout_set_text (W.layout, "foo", 3);
-
-    pango_renderer_draw_layout (W.renderer, W.layout,
-				300 * PANGO_SCALE,
-				300 * PANGO_SCALE);
 
     printf("exposed\n");
     return true;
@@ -255,7 +312,7 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 void darea_realize(GtkWidget * w, gpointer user_data)
 {
     (void)user_data;
-    drawstuff(w);
+    init_draw(w);
 
     gtk_widget_add_events(w, GDK_BUTTON_PRESS_MASK);
 
