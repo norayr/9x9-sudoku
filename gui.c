@@ -20,8 +20,10 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Thu 28 Jan 2010 22:34:25 EET too
+ * Last modified: Fri 29 Jan 2010 18:16:07 EET too
  */
+
+#include <string.h>
 
 #if NOTMAEMO
 #define MAEMO 0
@@ -39,39 +41,49 @@
 enum { false = 0, true = 1 } bool;
 #define null ((void*)0)
 
-/* http://talk.maemo.org/showthread.php?p=461531 */
 
 #if MAEMO
-#include <gdk/gdkx.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-
-/* Rotate window into portrat mode and make fullscreen */
-
-void portraitmode(Window win)
+gboolean is_portrait(void)
 {
-    unsigned char on = 1;
-    Display * dpy = XOpenDisplay(0/*null*/);/* or use toolkit's dpy variable */
-    Atom newstate;
+    GdkScreen * screen = gdk_screen_get_default();
+    int width = gdk_screen_get_width(screen);
+    int height = gdk_screen_get_height(screen);
 
-    XChangeProperty(dpy, win,
-		    XInternAtom(dpy, "_HILDON_PORTRAIT_MODE_SUPPORT", True),
-		    XA_CARDINAL, 32, PropModeReplace, &on, 1);
-
-    XChangeProperty(dpy, win,
-		    XInternAtom(dpy, "_HILDON_PORTRAIT_MODE_REQUEST", True),
-		    XA_CARDINAL, 32, PropModeReplace, &on, 1);
-
-    newstate = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", True);
-    XChangeProperty(dpy, win,
-		    XInternAtom(dpy, "_NET_WM_STATE", True), XA_ATOM, 32,
-		    PropModeReplace, (unsigned char *) &newstate, 1);
+    return width < height;
 }
 #endif
 
+
 /* globals, except widgets */
 struct {
-    int table[9][9];
+    struct {
+	gint16 x;
+	gint16 y;
+	gint8 value;
+	gint8 notes[9];
+    } table[9][9];
+    struct {
+	gint16 left;
+	gint16 right;
+	gint16 up;
+	gint16 down;
+    } tlimits[9];
+
+    struct {
+	gint16 x;
+	gint16 y;
+	gint8 state;
+	gint8 value;
+    } buttons[5][2];
+
+    struct {
+	gint16 left;
+	gint16 right;
+    } blimits_x[5];
+    struct {
+	gint16 up;
+	gint16 down;
+    } blimits_y[2];
 } G;
 
 /* widgets (and such)*/
@@ -83,6 +95,47 @@ struct {
 
 #define DA_HEIGHT 744
 #define DA_WIDTH 480
+
+void init_G(void)
+{
+    memset(&G, 0, sizeof G);
+    memset(&W, 0, sizeof W);
+}
+
+void init_table(void)
+{
+    for (int i = 0; i < 9; i++) {
+	int x = 00 + 4 + i * 52 + 3 * (i / 3);
+	for (int j = 0; j < 9; j++) {
+	    int y = 50 + 4 + j * 52 + 3 * (j / 3);
+
+	    G.table[i][j].x = x;
+	    G.table[i][j].y = y;
+	    if (i == 0) {
+		G.tlimits[j].up = y + 1;
+		G.tlimits[j].down = y + 48;
+	    }
+	}
+	G.tlimits[i].left = x + 1;
+	G.tlimits[i].right = x + 48;
+    }
+
+    for (int i = 0; i < 5; i++) {
+	int x = 64 + i * 72;
+	for (int j = 0; j < 2; j++) {
+	    int y = 50 + 520 + j * 72;
+
+	    G.buttons[i][j].x = x;
+	    G.buttons[i][j].y = y;
+	    if (i == 0) {
+		G.blimits_y[j].up = y + 1;
+		G.blimits_y[j].down = y + 62;
+	    }
+	}
+	G.blimits_x[i].left = x + 1;
+	G.blimits_x[i].right = x + 62;
+    }
+}
 
 
 void drawstuff(GdkDrawable * drawable)
@@ -107,14 +160,17 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     int i;
     int j;
 
-#if NOTMAEMO
+#if MAEMO
+    if (! is_portrait() )
+	return;
+#else
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
 
     for (i = 0; i < 9; i++) {
 	for (j = 0; j < 9; j++) {
-	    int x = 00 + 4 + i * 52 + 3 * (i / 3);
-	    int y = 50 + 4 + j * 52 + 3 * (j / 3);
+	    int x = G.table[i][j].x;
+	    int y = G.table[i][j].y;
 
 	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
 			       tile50_pixel_data, 150);
@@ -122,10 +178,10 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	}
     }
 
-    for (i = 0; i < 2; i++)
-	for (j = 0; j < 5; j++) {
-	    int x = 64 + j * 72;
-	    int y = 50 + 520 + i * 72;
+    for (i = 0; i < 5; i++)
+	for (j = 0; j < 2; j++) {
+	    int x = G.buttons[i][j].x;
+	    int y = G.buttons[i][j].y;
 
 	    gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
 
@@ -137,8 +193,36 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 {
     (void)w; (void)ud;
+    int x = (int)e->x;
+    int y = (int)e->y;
 
-    printf("buttonpress: %d %d\n", (int)e->x, (int)e->y);
+    int r = -1, c = -1;
+
+    if (y > G.tlimits[0].up && y < G.tlimits[8].down)
+    {
+	printf("%d %d\n", G.tlimits[0].left, G.tlimits[0].right);
+	printf("%d %d\n", G.tlimits[0].up, G.tlimits[0].down);
+
+	for (r = 8; r >= 0; r--)
+	    if ( x > G.tlimits[r].left && x < G.tlimits[r].right)
+		break;
+
+	for (c = 8; c >= 0; c--)
+	    if ( y > G.tlimits[c].up && y < G.tlimits[c].down)
+		break;
+    }
+    else if (y > G.blimits_y[0].up && y < G.blimits_y[1].down)
+    {
+	for (r = 4; r >= 0; r--)
+	    if ( x > G.blimits_x[r].left && x < G.blimits_x[r].right)
+		break;
+
+	for (c = 1; c >= 0; c--)
+	    if ( y > G.blimits_y[c].up && y < G.blimits_y[c].down)
+		break;
+    }
+
+    printf("buttonpress: %d %d (%d %d)\n", x, y, r, c);
     return true;
 }
 
@@ -163,11 +247,16 @@ void darea_realize(GtkWidget * w, gpointer user_data)
 
 void save_and_quit(void)
 {
+    // script will save it's state when fd closes
     gtk_main_quit();
 }
 
+/* http://talk.maemo.org/showthread.php?p=461531 */
+
 void buildgui(void)
 {
+    init_table();
+
     /* Create the main window */
 #if MAEMO
     GtkWidget * mainwin = hildon_stackable_window_new();
@@ -179,39 +268,32 @@ void buildgui(void)
     g_signal_connect(G_OBJECT(mainwin), "delete_event",
                      G_CALLBACK(save_and_quit), null);
 
-#if 0
-    GtkWidget * vbox = gtk_vbox_new(false, 5);
-    gtk_container_add(GTK_CONTAINER(mainwin), vbox);
+#if 0 // XXX this might be needed...
+    g_signal_connect(screen, "size-changed", on_orientation_changed, widget);
+#endif
 
-    GtkWidget * label = gtk_label_new("message");
-    gtk_box_pack_start(GTK_BOX(vbox), label, false, false, 9);
+#if MAEMO
+    //gtk_window_fullscreen (GTK_WINDOW (mainwin));// will make title disappear
+    // portrait mode
+    hildon_gtk_window_set_portrait_flags(GTK_WINDOW(mainwin),
+					 HILDON_PORTRAIT_MODE_REQUEST);
 #endif
 
     GtkWidget * da = gtk_drawing_area_new();
     gtk_widget_set_size_request(da, DA_WIDTH, DA_HEIGHT);
-    /* needed for da->window to exist */
-    gtk_widget_show(da);
     gtk_signal_connect(GTK_OBJECT(da), "realize",
 		       GTK_SIGNAL_FUNC(darea_realize), null);
-#if 0
-    gtk_box_pack_start(GTK_BOX(vbox), da, false, false, 9);
-#else
+
     gtk_container_add(GTK_CONTAINER(mainwin), da);
-#endif
 
     /* Show the application window */
     gtk_widget_show_all (mainwin);
-
-#if MAEMO
-    /* portrait mode */
-    portraitmode(GDK_WINDOW_XID(mainwin->window));
-#endif
-
 }
 
 
 int main(int argc, char * argv[])
 {
+    init_G();
     /* Initialize i18n support */
     gtk_set_locale ();
 
