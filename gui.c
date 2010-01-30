@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 20:33:33 EET too
+ * Last modified: Sat 30 Jan 2010 20:47:39 EET too
  */
 
 #include <string.h>
@@ -415,6 +415,8 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 	    if ( y > T.blimits_y[c].up && y < T.blimits_y[c].down)
 		break;
     }
+
+    fdprintf1k(G.lr.fd, "%d %d\n", r, c);
 
     printf("buttonpress: %d %d (%d %d)\n", x, y, r, c);
     return true;

@@ -50,3 +50,20 @@ int move_fd(int oldfd, int newfd)
     return rv;
 }
 
+void vfdprintf1k(int fd, const char * format, va_list ap)
+{
+    char buf[1024];
+    size_t len = vsnprintf(buf, sizeof buf, format, ap);
+    if (len > sizeof buf)
+	len = sizeof buf;
+    (void)write(fd, buf, len);
+}
+
+void fdprintf1k(int fd, const char * format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vfdprintf1k(fd, format, ap);
+    va_end(ap);
+}
+
