@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "uutil.h"
 
@@ -37,5 +38,15 @@ void vwarn(const char * format, va_list ap)
     else
 	fputs("\n", stderr);
     fflush(stderr); /* needed sometimes... */
+}
+
+int move_fd(int oldfd, int newfd)
+{
+    int rv;
+    if (oldfd == newfd)
+	return 0;
+    rv = dup2(oldfd, newfd);
+    close(oldfd);
+    return rv;
 }
 

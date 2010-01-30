@@ -20,12 +20,16 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 19:56:06 EET too
+ * Last modified: Sat 30 Jan 2010 20:25:33 EET too
  */
 
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
 extern char ** environ;
 
 #if NOTMAEMO
@@ -47,6 +51,13 @@ extern char ** environ;
 
 typedef enum { false = 0, true = 1 } bool;
 #define null ((void*)0)
+
+#if 1
+#define dfc(x) do { printf x; } while (0)
+#else
+#define dfc(x) do {} while (0)
+#endif
+#define dfc0(x) do {} while (0)
 
 #if MAEMO
 gboolean is_portrait(void)
@@ -92,22 +103,27 @@ void init_G(void)
 
 int run_game_prog(void)
 {
-    int fds[2];
+    dfc(("run_game_prog\n"));
+
+    int sv[2];
     const char *argv[2] = { "./game.pl", null };
 
-    if (pipe(fds) < 0)
-	die("pipe():");
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) < 0)
+	die("socketpair():");
 
     switch (fork()) {
     case -1:
 	die("fork():");
     case 0:
-	close(fds[1]);
-	execve(argv[0], argv, environ);
+	close(sv[1]);
+	move_fd(sv[0], 0);
+	dup2(0, 1);
+	if (execve(argv[0], argv, environ) != 0)
+	    die("execve():");
 	break;
     default:
-	close(fds[0]);
-	return fds[1];
+	close(sv[0]);
+	return sv[1];
     }
     /* not reached */
     exit(1);
@@ -115,12 +131,14 @@ int run_game_prog(void)
 
 void handle_line(char * str, int len)
 {
+    dfc(("handle_line\n"));
     write(1, str, len);
 }
 
 gboolean game_input(void) /* (GIOChannel * source,
 			      GIOCondition condition, gpointer data) */
 {
+    dfc(("game_input\n"));
     char * s;
     int l = lineread(&G.lr, &s);
     if (l < 0)
@@ -157,8 +175,11 @@ gboolean game_input(void) /* (GIOChannel * source,
 
 void start_game(void)
 {
+    dfc(("start_game\n"));
+
     int fd = run_game_prog();
 
+    dfc(("fd %d\n", fd));
     lineread_init(&G.lr, fd);
 
     G.iochannel = g_io_channel_unix_new(fd);
