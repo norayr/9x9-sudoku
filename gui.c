@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 18:45:40 EET too
+ * Last modified: Sat 30 Jan 2010 19:56:06 EET too
  */
 
 #include <string.h>
@@ -39,14 +39,14 @@ extern char ** environ;
 #include <hildon/hildon-main.h>
 #endif
 
+#include "lineread.h"
 #include "uutil.h"
 #include "tile50.h"
 #include "up64.h"
 #include "down64.h"
 
-enum { false = 0, true = 1 } bool;
+typedef enum { false = 0, true = 1 } bool;
 #define null ((void*)0)
-
 
 #if MAEMO
 gboolean is_portrait(void)
@@ -61,7 +61,9 @@ gboolean is_portrait(void)
 /* globals, except widgets */
 struct {
     //const char * prgname;
-    int fds[2];
+    LineRead lr;
+    GIOChannel * iochannel;
+    bool idlehandler;
 } G;
 
 /* widgets (and such)*/
@@ -109,6 +111,58 @@ int run_game_prog(void)
     }
     /* not reached */
     exit(1);
+}
+
+void handle_line(char * str, int len)
+{
+    write(1, str, len);
+}
+
+gboolean game_input(void) /* (GIOChannel * source,
+			      GIOCondition condition, gpointer data) */
+{
+    char * s;
+    int l = lineread(&G.lr, &s);
+    if (l < 0)
+	exit(1);
+    if (l == 0) {
+	if (G.idlehandler) {
+	    g_io_add_watch(G.iochannel, G_IO_IN | G_IO_HUP, game_input, null);
+	    G.idlehandler = false;
+	    return false; /* no more idle */
+	}
+	return true; /* read more data */
+    }
+    handle_line(s, l);
+
+    if (lineread_count(&G.lr)) {
+	if (G.idlehandler)
+	    return true; /* more idle */
+	else {
+	    g_idle_add(game_input, null);
+	    G.idlehandler = true;
+	    return false; /* no more io */
+	}
+    }
+    else {
+	lineread(&G.lr, &s); /* set 'select()ed' lineread state */
+	if (G.idlehandler) {
+	    g_io_add_watch(G.iochannel, G_IO_IN | G_IO_HUP, game_input, null);
+	    G.idlehandler = false;
+	    return false; /* no more idle */
+	}
+	return true; /* read more data */
+    }
+}
+
+void start_game(void)
+{
+    int fd = run_game_prog();
+
+    lineread_init(&G.lr, fd);
+
+    G.iochannel = g_io_channel_unix_new(fd);
+    g_io_add_watch(G.iochannel, G_IO_IN | G_IO_HUP, game_input, null);
 }
 
 /* screen ui data, can be created many times during program execution */
@@ -423,6 +477,8 @@ int main(int argc, char * argv[])
 #endif
 
     buildgui();
+
+    start_game();
 
     /* Enter the main event loop, and wait for user interaction */
     gtk_main ();

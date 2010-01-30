@@ -20,5 +20,6 @@ typedef struct
 
 int lineread(LineRead * lr, char ** ptr);
 void lineread_init(LineRead * lr, int fd);
+int lineread_count(LineRead * lr);
 
 #endif /* LINEREAD_H */
