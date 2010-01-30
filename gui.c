@@ -20,12 +20,13 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 21:45:32 EET too
+ * Last modified: Sat 30 Jan 2010 23:19:53 EET too
  */
 
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -130,10 +131,169 @@ int run_game_prog(void)
     exit(1);
 }
 
-void handle_line(char * str, int len)
+/* screen ui data, can be created many times during program execution */
+struct {
+    struct {
+	gint16 x;
+	gint16 y;
+	gint8 value;
+	gint8 notes[9];
+    } table[9][9];
+    struct {
+	gint16 left;
+	gint16 right;
+	gint16 up;
+	gint16 down;
+    } tlimits[9];
+
+    struct {
+	gint16 x;
+	gint16 y;
+	gint8 state;
+	char value;
+    } buttons[5][2];
+
+    struct {
+	gint16 left;
+	gint16 right;
+    } blimits_x[5];
+    struct {
+	gint16 up;
+	gint16 down;
+    } blimits_y[2];
+} T;
+
+void draw_char(int x, int y, char c)
 {
-    dfc(("handle_line\n"));
-    write(1, str, len);
+    pango_layout_set_text (W.layout, &c, 1);
+
+    pango_renderer_draw_layout (W.renderer, W.layout,
+				x * PANGO_SCALE, y * PANGO_SCALE);
+}
+
+
+void draw_block(int ax, int ay)
+{
+    int x = T.table[ax][ay].x;
+    int y = T.table[ax][ay].y;
+
+    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 50, 50, 0,
+		       tile50_pixel_data, 150);
+
+    gint8 value = T.table[ax][ay].value;
+    if (value < 0) {
+	pango_layout_set_font_description (W.layout, W.fd3);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_red);
+	draw_char(x + 15, y + 7, '1' - value);
+    }
+    else if (value > 0) {
+	pango_layout_set_font_description (W.layout, W.fd3);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+	draw_char(x + 15, y + 7, '1' + value);
+    }
+    else { /* value == 0 */
+	pango_layout_set_font_description (W.layout, W.fd1);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+
+	if (T.table[ax][ay].notes[0]) draw_char(x + 6, y + 1, '1');
+	if (T.table[ax][ay].notes[1]) draw_char(x + 20, y + 1, '2');
+	if (T.table[ax][ay].notes[2]) draw_char(x + 34, y + 1, '3');
+
+	if (T.table[ax][ay].notes[3]) draw_char(x + 6, y + 16, '4');
+	if (T.table[ax][ay].notes[4]) draw_char(x + 20, y + 16, '5');
+	if (T.table[ax][ay].notes[5]) draw_char(x + 34, y + 16, '6');
+
+	if (T.table[ax][ay].notes[6]) draw_char(x + 6, y + 31, '7');
+	if (T.table[ax][ay].notes[7]) draw_char(x + 20, y + 31, '8');
+	if (T.table[ax][ay].notes[8]) draw_char(x + 34, y + 31, '9');
+    }
+}
+
+void draw_button(int ax, int ay)
+{
+    int x = T.buttons[ax][ay].x;
+    int y = T.buttons[ax][ay].y;
+    const unsigned char * pd;
+
+    if (T.buttons[ax][ay].state == 0)
+	pd = up64_pixel_data;
+    else
+	pd = down64_pixel_data;
+
+    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 64, 64, 0, pd, 192);
+
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+
+    if (T.buttons[ax][ay].state >= 0) {
+	pango_layout_set_font_description (W.layout, W.fd4);
+	x = x + 18; y = y + 4;
+    }
+    else {
+	pango_layout_set_font_description (W.layout, W.fd2);
+	x = x + 24; y = y + 18;
+    }
+    draw_char(x, y, T.buttons[ax][ay].value);
+}
+
+const char * get_token(char ** strp, int * lenp)
+{
+    char * s;
+
+    while (isspace(**strp) && *lenp > 0) {
+	(*strp)++; (*lenp)--;
+    }
+    if (*lenp == 0)
+	return "";
+    s = *strp;
+
+    while (! isspace(**strp) && *lenp > 0) {
+	(*strp)++; (*lenp)--;
+    }
+    return s;
+}
+
+void handle_line(char * stri, int len)
+{
+    dfc(("handle_line (len %d)\n", len));
+    (void)write(1, stri, len);
+    const char * str;
+    int x, y;
+
+    while (len) {
+	str = get_token(&stri, &len);
+
+	switch (str[0]) {
+	case '#': // block
+	    if (str[1] < '0' || str[1] > '8') continue; // ignore message
+	    if (str[2] < '0' || str[2] > '8') continue; // ignore message
+	    x = str[1] - '0' ; y = str[2] - '0';
+	    if (str[4] < '0' || str[4] > '8') continue; // ignore message
+
+	    switch (str[3]) {
+	    case '/': T.table[x][y].value = - (str[4] - '0'); break;
+	    case '+': T.table[x][y].value = + (str[4] - '0'); break;
+	    case '.': T.table[x][y].value = 0;
+		memset(&T.table[x][y].notes, 0, sizeof T.table[x][y].notes);
+		for (int i = 4; str[i] >= '0' && str[i] <= '8'; i++)
+		    T.table[x][y].notes[str[i] - '0'] = 1;
+		break;
+	    }
+	    draw_block(x, y);
+	    break;
+	case '*': // button
+	    if (str[1] < '0' || str[1] > '4') continue; // ignore message
+	    if (str[2] < '0' || str[2] > '1') continue; // ignore message
+	    x = str[1] - '0' ; y = str[2] - '0';
+	    dfc(("xx %d %d\n", x, y));
+	    switch (str[3]) {
+	    case '/': T.buttons[x][y].state = 0; break;
+	    case '+': T.buttons[x][y].state = 1; break;
+	    case '.': T.buttons[x][y].state =-1; break;
+	    }
+	    draw_button(x, y);
+	    break;
+	}
+    }
 }
 
 gboolean game_input(void) /* (GIOChannel * source,
@@ -186,38 +346,6 @@ void start_game(void)
     G.iochannel = g_io_channel_unix_new(fd);
     g_io_add_watch(G.iochannel, G_IO_IN | G_IO_HUP, game_input, null);
 }
-
-/* screen ui data, can be created many times during program execution */
-struct {
-    struct {
-	gint16 x;
-	gint16 y;
-	gint8 value;
-	gint8 notes[9];
-    } table[9][9];
-    struct {
-	gint16 left;
-	gint16 right;
-	gint16 up;
-	gint16 down;
-    } tlimits[9];
-
-    struct {
-	gint16 x;
-	gint16 y;
-	gint8 state;
-	char value;
-    } buttons[5][2];
-
-    struct {
-	gint16 left;
-	gint16 right;
-    } blimits_x[5];
-    struct {
-	gint16 up;
-	gint16 down;
-    } blimits_y[2];
-} T;
 
 void init_tables(void)
 {
@@ -296,76 +424,6 @@ void render_text(int x, int y, PangoFontDescription * fd, GdkGC * gc, char * t)
 				x * PANGO_SCALE, y * PANGO_SCALE);
 }
 
-void draw_char(int x, int y, char c)
-{
-    pango_layout_set_text (W.layout, &c, 1);
-
-    pango_renderer_draw_layout (W.renderer, W.layout,
-				x * PANGO_SCALE, y * PANGO_SCALE);
-}
-
-
-void draw_block(int ax, int ay)
-{
-    int x = T.table[ax][ay].x;
-    int y = T.table[ax][ay].y;
-
-    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 50, 50, 0,
-		       tile50_pixel_data, 150);
-
-    gint8 value = T.table[ax][ay].value;
-    if (value < 0) {
-	pango_layout_set_font_description (W.layout, W.fd3);
-	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_red);
-	draw_char(x + 15, y + 7, '1' - value);
-    }
-    else if (value > 0) {
-	pango_layout_set_font_description (W.layout, W.fd3);
-	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
-	draw_char(x + 15, y + 7, '1' + value);
-    }
-    else { /* value == 0 */
-	pango_layout_set_font_description (W.layout, W.fd1);
-	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
-
-	if (T.table[ax][ay].notes[0]) draw_char(x + 6, y + 1, '1');
-	if (T.table[ax][ay].notes[1]) draw_char(x + 20, y + 1, '2');
-	if (T.table[ax][ay].notes[2]) draw_char(x + 34, y + 1, '3');
-
-	if (T.table[ax][ay].notes[3]) draw_char(x + 6, y + 16, '4');
-	if (T.table[ax][ay].notes[4]) draw_char(x + 20, y + 16, '5');
-	if (T.table[ax][ay].notes[5]) draw_char(x + 34, y + 16, '6');
-
-	if (T.table[ax][ay].notes[6]) draw_char(x + 6, y + 31, '7');
-	if (T.table[ax][ay].notes[7]) draw_char(x + 20, y + 31, '8');
-	if (T.table[ax][ay].notes[8]) draw_char(x + 34, y + 31, '9');
-    }
-}
-
-void draw_button(int ax, int ay)
-{
-    int x = T.buttons[ax][ay].x;
-    int y = T.buttons[ax][ay].y;
-    const unsigned char * pd;
-
-    if (T.buttons[ax][ay].state == 0)
-	pd = up64_pixel_data;
-    else
-	pd = down64_pixel_data;
-
-    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 64, 64, 0, pd, 192);
-
-    if (T.buttons[ax][ay].state >= 0) {
-	pango_layout_set_font_description (W.layout, W.fd4);
-	x = x + 18; y = y + 4;
-    }
-    else {
-	pango_layout_set_font_description (W.layout, W.fd2);
-	x = x + 24; y = y + 18;
-    }
-    draw_char(x, y, T.buttons[ax][ay].value);
-}
-
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 {
     (void)e; (void)user_data;
@@ -383,64 +441,13 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     pango_layout_set_font_description (W.layout, W.fd1);
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
 
-    for (i = 0; i < 9; i++) {
-	for (j = 0; j < 9; j++) {
-	    int x = T.table[i][j].x;
-	    int y = T.table[i][j].y;
-
-	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
-			       tile50_pixel_data, 150);
-	    //gdk_draw_rectangle(w->window, W.gc_white, true, x, y, 50, 50);
-
-	    if (i == 6) {
-		pango_layout_set_font_description (W.layout, W.fd3);
-		draw_char(x + 15, y + 7, j + '1');
-	    }
-	    else {
-		pango_layout_set_font_description (W.layout, W.fd1);
-		draw_char(x + 6, y + 1, '1');
-		draw_char(x + 20, y + 1, '2');
-		draw_char(x + 34, y + 1, '3');
-
-		draw_char(x + 6, y + 16, '4');
-		draw_char(x + 20, y + 16, '5');
-		draw_char(x + 34, y + 16, '6');
-
-		draw_char(x + 6, y + 31, '7');
-		draw_char(x + 20, y + 31, '8');
-		draw_char(x + 34, y + 31, '9');
-	    }
-	}
-    }
-
-    pango_layout_set_font_description (W.layout, W.fd2);
-    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+    for (i = 0; i < 9; i++)
+	for (j = 0; j < 9; j++)
+	    draw_block(i, j);
 
     for (i = 0; i < 5; i++)
-	for (j = 0; j < 2; j++) {
-	    int x = T.buttons[i][j].x;
-	    int y = T.buttons[i][j].y;
-
-	    int ox, oy;
-	    const unsigned char * pd;
-	    if (i == 3) {
-		pango_layout_set_font_description (W.layout, W.fd2);
-		pd = down64_pixel_data;
-		ox = x + 24; oy = y + 18;
-	    }
-	    else {
-		pango_layout_set_font_description (W.layout, W.fd4);
-		pd = up64_pixel_data;
-		ox = x + 18; oy = y + 4;
-	    }
-
-	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 64, 64, 0,
-			       pd, 192);
-
-	    //gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
-	    draw_char(ox, oy, T.buttons[i][j].value);
-	    //pango_layout_set_font_description (W.layout, W.fd3);
-	}
+	for (j = 0; j < 2; j++)
+	    draw_button(i, j);
 
     printf("exposed\n");
     return true;
