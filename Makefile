@@ -2,7 +2,7 @@
 
 all: gui
 
-SRC=gui.c tile50.c up64.c down64.c
+SRC=gui.c lineread.c uutil.c tile50.c up64.c down64.c
 OBJ=$(SRC:%.c=%.o)
 
 
@@ -13,6 +13,12 @@ gui: $(OBJ)
 
 
 gui.o: gui.c tile50.h up64.h down64.h
+	sh $<
+
+uutil.o: uutil.c
+	sh $<
+
+lineread.o: lineread.c
 	sh $<
 
 tile50.o: tile50.c

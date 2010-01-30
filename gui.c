@@ -20,10 +20,13 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 00:01:58 EET too
+ * Last modified: Sat 30 Jan 2010 18:45:40 EET too
  */
 
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+extern char ** environ;
 
 #if NOTMAEMO
 #define MAEMO 0
@@ -36,6 +39,7 @@
 #include <hildon/hildon-main.h>
 #endif
 
+#include "uutil.h"
 #include "tile50.h"
 #include "up64.h"
 #include "down64.h"
@@ -54,8 +58,60 @@ gboolean is_portrait(void)
 }
 #endif
 
-
 /* globals, except widgets */
+struct {
+    //const char * prgname;
+    int fds[2];
+} G;
+
+/* widgets (and such)*/
+struct {
+    GdkGC * gc_red;
+    GdkGC * gc_white;
+    GdkGC * gc_black;
+
+    PangoFontDescription * fd1;
+    PangoFontDescription * fd2;
+    PangoFontDescription * fd3;
+    PangoFontDescription * fd4;
+    GdkScreen * screen;
+    PangoLayout * layout;
+    PangoRenderer * renderer;
+} W;
+
+#define DA_HEIGHT 744
+#define DA_WIDTH 480
+
+void init_G(void)
+{
+    memset(&G, 0, sizeof G);
+    memset(&W, 0, sizeof W);
+}
+
+int run_game_prog(void)
+{
+    int fds[2];
+    const char *argv[2] = { "./game.pl", null };
+
+    if (pipe(fds) < 0)
+	die("pipe():");
+
+    switch (fork()) {
+    case -1:
+	die("fork():");
+    case 0:
+	close(fds[1]);
+	execve(argv[0], argv, environ);
+	break;
+    default:
+	close(fds[0]);
+	return fds[1];
+    }
+    /* not reached */
+    exit(1);
+}
+
+/* screen ui data, can be created many times during program execution */
 struct {
     struct {
 	gint16 x;
@@ -85,48 +141,26 @@ struct {
 	gint16 up;
 	gint16 down;
     } blimits_y[2];
-} G;
+} T;
 
-/* widgets (and such)*/
-struct {
-    GdkGC * gc_red;
-    GdkGC * gc_white;
-    GdkGC * gc_black;
-
-    PangoFontDescription * fd1;
-    PangoFontDescription * fd2;
-    PangoFontDescription * fd3;
-    PangoFontDescription * fd4;
-    GdkScreen * screen;
-    PangoLayout * layout;
-    PangoRenderer * renderer;
-} W;
-
-#define DA_HEIGHT 744
-#define DA_WIDTH 480
-
-void init_G(void)
+void init_tables(void)
 {
-    memset(&G, 0, sizeof G);
-    memset(&W, 0, sizeof W);
-}
+    memset(&T, 0, sizeof T);
 
-void init_table(void)
-{
     for (int i = 0; i < 9; i++) {
 	int x = 00 + 4 + i * 52 + 3 * (i / 3);
 	for (int j = 0; j < 9; j++) {
 	    int y = 50 + 4 + j * 52 + 3 * (j / 3);
 
-	    G.table[i][j].x = x;
-	    G.table[i][j].y = y;
+	    T.table[i][j].x = x;
+	    T.table[i][j].y = y;
 	    if (i == 0) {
-		G.tlimits[j].up = y + 1;
-		G.tlimits[j].down = y + 48;
+		T.tlimits[j].up = y + 1;
+		T.tlimits[j].down = y + 48;
 	    }
 	}
-	G.tlimits[i].left = x + 1;
-	G.tlimits[i].right = x + 48;
+	T.tlimits[i].left = x + 1;
+	T.tlimits[i].right = x + 48;
     }
 
     for (int i = 0; i < 5; i++) {
@@ -134,18 +168,18 @@ void init_table(void)
 	for (int j = 0; j < 2; j++) {
 	    int y = 50 + 520 + j * 72;
 
-	    G.buttons[i][j].x = x;
-	    G.buttons[i][j].y = y;
-	    G.buttons[i][j].value = '1' + i + 5 * j;
+	    T.buttons[i][j].x = x;
+	    T.buttons[i][j].y = y;
+	    T.buttons[i][j].value = '1' + i + 5 * j;
 	    if (i == 0) {
-		G.blimits_y[j].up = y + 1;
-		G.blimits_y[j].down = y + 62;
+		T.blimits_y[j].up = y + 1;
+		T.blimits_y[j].down = y + 62;
 	    }
 	}
-	G.blimits_x[i].left = x + 1;
-	G.blimits_x[i].right = x + 62;
+	T.blimits_x[i].left = x + 1;
+	T.blimits_x[i].right = x + 62;
     }
-    G.buttons[4][1].value = ' ';
+    T.buttons[4][1].value = ' ';
 }
 
 void init_draw(GtkWidget * widget)
@@ -213,8 +247,8 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     for (i = 0; i < 9; i++) {
 	for (j = 0; j < 9; j++) {
-	    int x = G.table[i][j].x;
-	    int y = G.table[i][j].y;
+	    int x = T.table[i][j].x;
+	    int y = T.table[i][j].y;
 
 	    gdk_draw_rgb_image(w->window, W.gc_white, x, y, 50, 50, 0,
 			       tile50_pixel_data, 150);
@@ -246,10 +280,11 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     for (i = 0; i < 5; i++)
 	for (j = 0; j < 2; j++) {
-	    int x = G.buttons[i][j].x;
-	    int y = G.buttons[i][j].y;
+	    int x = T.buttons[i][j].x;
+	    int y = T.buttons[i][j].y;
 
-	    int ox, oy, pd;
+	    int ox, oy;
+	    const unsigned char * pd;
 	    if (i == 3) {
 		pango_layout_set_font_description (W.layout, W.fd2);
 		pd = down64_pixel_data;
@@ -265,7 +300,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 			       pd, 192);
 
 	    //gdk_draw_rectangle(w->window, W.gc_red, true, x, y, 64, 64);
-	    draw_char(ox, oy, G.buttons[i][j].value);
+	    draw_char(ox, oy, T.buttons[i][j].value);
 	    //pango_layout_set_font_description (W.layout, W.fd3);
 	}
 
@@ -281,27 +316,27 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 
     int r = -1, c = -1;
 
-    if (y > G.tlimits[0].up && y < G.tlimits[8].down)
+    if (y > T.tlimits[0].up && y < T.tlimits[8].down)
     {
-	printf("%d %d\n", G.tlimits[0].left, G.tlimits[0].right);
-	printf("%d %d\n", G.tlimits[0].up, G.tlimits[0].down);
+	printf("%d %d\n", T.tlimits[0].left, T.tlimits[0].right);
+	printf("%d %d\n", T.tlimits[0].up, T.tlimits[0].down);
 
 	for (r = 8; r >= 0; r--)
-	    if ( x > G.tlimits[r].left && x < G.tlimits[r].right)
+	    if ( x > T.tlimits[r].left && x < T.tlimits[r].right)
 		break;
 
 	for (c = 8; c >= 0; c--)
-	    if ( y > G.tlimits[c].up && y < G.tlimits[c].down)
+	    if ( y > T.tlimits[c].up && y < T.tlimits[c].down)
 		break;
     }
-    else if (y > G.blimits_y[0].up && y < G.blimits_y[1].down)
+    else if (y > T.blimits_y[0].up && y < T.blimits_y[1].down)
     {
 	for (r = 4; r >= 0; r--)
-	    if ( x > G.blimits_x[r].left && x < G.blimits_x[r].right)
+	    if ( x > T.blimits_x[r].left && x < T.blimits_x[r].right)
 		break;
 
 	for (c = 1; c >= 0; c--)
-	    if ( y > G.blimits_y[c].up && y < G.blimits_y[c].down)
+	    if ( y > T.blimits_y[c].up && y < T.blimits_y[c].down)
 		break;
     }
 
@@ -338,7 +373,7 @@ void save_and_quit(void)
 
 void buildgui(void)
 {
-    init_table();
+    init_tables();
 
     /* Create the main window */
 #if MAEMO
