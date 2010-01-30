@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 21:06:19 EET too
+ * Last modified: Sat 30 Jan 2010 21:45:32 EET too
  */
 
 #include <string.h>
@@ -90,6 +90,7 @@ struct {
     GdkScreen * screen;
     PangoLayout * layout;
     PangoRenderer * renderer;
+    GdkDrawable * drawable;
 } W;
 
 #define DA_HEIGHT 744
@@ -259,11 +260,11 @@ void init_tables(void)
 
 void init_draw(GtkWidget * widget)
 {
-    GdkDrawable * drawable = widget->window;
+    W.drawable = widget->window;
 
-    W.gc_black = gdk_gc_new(drawable);
-    W.gc_white = gdk_gc_new(drawable);
-    W.gc_red = gdk_gc_new(drawable);
+    W.gc_black = gdk_gc_new(W.drawable);
+    W.gc_white = gdk_gc_new(W.drawable);
+    W.gc_red = gdk_gc_new(W.drawable);
 
     GdkColor color = { .red = 32768, .green = 32768, .blue = 65535 };
     gdk_gc_set_rgb_fg_color(W.gc_white, &color);
@@ -274,7 +275,7 @@ void init_draw(GtkWidget * widget)
 
     W.screen = gdk_screen_get_default();
     W.renderer = gdk_pango_renderer_get_default(W.screen);
-    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), drawable);
+    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), W.drawable);
 
     W.layout = gtk_widget_create_pango_layout(widget, "");
 
@@ -301,6 +302,68 @@ void draw_char(int x, int y, char c)
 
     pango_renderer_draw_layout (W.renderer, W.layout,
 				x * PANGO_SCALE, y * PANGO_SCALE);
+}
+
+
+void draw_block(int ax, int ay)
+{
+    int x = T.table[ax][ay].x;
+    int y = T.table[ax][ay].y;
+
+    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 50, 50, 0,
+		       tile50_pixel_data, 150);
+
+    gint8 value = T.table[ax][ay].value;
+    if (value < 0) {
+	pango_layout_set_font_description (W.layout, W.fd3);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_red);
+	draw_char(x + 15, y + 7, '1' - value);
+    }
+    else if (value > 0) {
+	pango_layout_set_font_description (W.layout, W.fd3);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+	draw_char(x + 15, y + 7, '1' + value);
+    }
+    else { /* value == 0 */
+	pango_layout_set_font_description (W.layout, W.fd1);
+	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+
+	if (T.table[ax][ay].notes[0]) draw_char(x + 6, y + 1, '1');
+	if (T.table[ax][ay].notes[1]) draw_char(x + 20, y + 1, '2');
+	if (T.table[ax][ay].notes[2]) draw_char(x + 34, y + 1, '3');
+
+	if (T.table[ax][ay].notes[3]) draw_char(x + 6, y + 16, '4');
+	if (T.table[ax][ay].notes[4]) draw_char(x + 20, y + 16, '5');
+	if (T.table[ax][ay].notes[5]) draw_char(x + 34, y + 16, '6');
+
+	if (T.table[ax][ay].notes[6]) draw_char(x + 6, y + 31, '7');
+	if (T.table[ax][ay].notes[7]) draw_char(x + 20, y + 31, '8');
+	if (T.table[ax][ay].notes[8]) draw_char(x + 34, y + 31, '9');
+    }
+}
+
+void draw_button(int ax, int ay)
+{
+    int x = T.buttons[ax][ay].x;
+    int y = T.buttons[ax][ay].y;
+    const unsigned char * pd;
+
+    if (T.buttons[ax][ay].state == 0)
+	pd = up64_pixel_data;
+    else
+	pd = down64_pixel_data;
+
+    gdk_draw_rgb_image(W.drawable, W.gc_white, x, y, 64, 64, 0, pd, 192);
+
+    if (T.buttons[ax][ay].state >= 0) {
+	pango_layout_set_font_description (W.layout, W.fd4);
+	x = x + 18; y = y + 4;
+    }
+    else {
+	pango_layout_set_font_description (W.layout, W.fd2);
+	x = x + 24; y = y + 18;
+    }
+    draw_char(x, y, T.buttons[ax][ay].value);
 }
 
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
