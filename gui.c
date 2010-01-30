@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 20:25:33 EET too
+ * Last modified: Sat 30 Jan 2010 20:33:33 EET too
  */
 
 #include <string.h>
@@ -138,9 +138,10 @@ void handle_line(char * str, int len)
 gboolean game_input(void) /* (GIOChannel * source,
 			      GIOCondition condition, gpointer data) */
 {
-    dfc(("game_input\n"));
+    dfc(("game_input: idle %d\n", G.idlehandler));
     char * s;
     int l = lineread(&G.lr, &s);
+    dfc(("game_input %d\n", l));
     if (l < 0)
 	exit(1);
     if (l == 0) {

@@ -15,7 +15,7 @@
  *      lineread.c - functions to read lines from fd:s effectively
  *
  * Created: sometime year 1991  // too
- * Last Modified: Sat 30 Jan 2010 19:58:19 EET too
+ * Last Modified: Sat 30 Jan 2010 20:32:28 EET too
  */
 
 #include <unistd.h>
@@ -136,5 +136,6 @@ void lineread_init(LineRead * lr, int fd)
     lr->fd = fd;
 
     lr->currp = lr->endp = NULL; /* any value works */
+    lr->sizep = lr->data + LR_BUFSIZE;
     lr->selected = lr->line_completed = true;
 }
