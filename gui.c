@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 20:47:39 EET too
+ * Last modified: Sat 30 Jan 2010 21:06:19 EET too
  */
 
 #include <string.h>
@@ -141,7 +141,6 @@ gboolean game_input(void) /* (GIOChannel * source,
     dfc(("game_input: idle %d\n", G.idlehandler));
     char * s;
     int l = lineread(&G.lr, &s);
-    dfc(("game_input %d\n", l));
     if (l < 0)
 	exit(1);
     if (l == 0) {
@@ -394,8 +393,8 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 
     if (y > T.tlimits[0].up && y < T.tlimits[8].down)
     {
-	printf("%d %d\n", T.tlimits[0].left, T.tlimits[0].right);
-	printf("%d %d\n", T.tlimits[0].up, T.tlimits[0].down);
+	//printf("%d %d\n", T.tlimits[0].left, T.tlimits[0].right);
+	//printf("%d %d\n", T.tlimits[0].up, T.tlimits[0].down);
 
 	for (r = 8; r >= 0; r--)
 	    if ( x > T.tlimits[r].left && x < T.tlimits[r].right)
@@ -404,6 +403,9 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 	for (c = 8; c >= 0; c--)
 	    if ( y > T.tlimits[c].up && y < T.tlimits[c].down)
 		break;
+
+	if (c >= 0 && r >= 0)
+	    fdprintf1k(G.lr.fd, "# %d %d\n", r, c);
     }
     else if (y > T.blimits_y[0].up && y < T.blimits_y[1].down)
     {
@@ -414,11 +416,11 @@ gboolean darea_button_press(GtkWidget * w, GdkEventButton * e, gpointer ud)
 	for (c = 1; c >= 0; c--)
 	    if ( y > T.blimits_y[c].up && y < T.blimits_y[c].down)
 		break;
+	if (c >= 0 && r >= 0)
+	    fdprintf1k(G.lr.fd, "* %d %d\n", r, c);
     }
 
-    fdprintf1k(G.lr.fd, "%d %d\n", r, c);
-
-    printf("buttonpress: %d %d (%d %d)\n", x, y, r, c);
+    //printf("buttonpress: %d %d (%d %d)\n", x, y, r, c);
     return true;
 }
 
