@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 31 Jan 2010 20:37:39 EET too
+# Last modified: Sun 31 Jan 2010 20:47:17 EET too
 
 use strict;
 use warnings;
@@ -19,7 +19,7 @@ $| = 1;
 my $pbx = 4;
 my $pby = 1;
 my $pbs = 0;
-my $pbv = 0;
+my $bv = 0;
 
 my (@tablep, @tablec);
 for (1..9)
@@ -71,7 +71,7 @@ sub num_match($$)
 {
     my $v = $tablec[$_[0]][$_[1]];
     return 0 if ref $v;
-    return 1 if $v == $pbv || $v == -$pbv;
+    return 1 if $v == $bv || $v == -$bv;
     return 0;
 }
 
@@ -96,7 +96,7 @@ sub number_fit($$)
 }
 
 while (<STDIN>) {
-    #print STDERR "-- $pbv --perl input: $_";
+    #print STDERR "-- $bv --perl input: $_";
     my ($w, $x, $y, @r) = split;
 
     if ($w eq '*') { # button
@@ -109,22 +109,21 @@ while (<STDIN>) {
 	    if ($pbs) {	print "*$x$y+\n"; $pbs = 0; }
 	    else {	print "*$x$y.\n"; $pbs = 1; }
 	}
-	$pbv = $x + $y * 5 + 1;
-	$pbv = 0 if $pbv > 9;
+	$bv = $x + $y * 5 + 1;
+	$bv = 0 if $bv > 9;
     }
     elsif ($w eq '#') {
 	my $v = $tablec[$x][$y];
-	next if ( ! ref $v && $v < 0);
-	print "$pbv $v\n";
-	if ($pbv == $v) {
+	next if ! ref $v && $v < 0; # generated value.
+	if ($bv == $v) {
 	    $v = $tablep[$x][$y];
 	    $tablec[$x][$y] = $tablep[$x][$y];
 	    print "#$x$y+$v\n";
 	    next;
 	}
-	next unless $pbv == 0 || number_fit $x, $y;
-	print "#$x$y+$pbv\n";
+	next unless $bv == 0 || number_fit $x, $y;
+	print "#$x$y+$bv\n";
 	$tablep[$x][$y] = $tablec[$x][$y];
-	$tablec[$x][$y] = $pbv;
+	$tablec[$x][$y] = $bv;
     }
 }

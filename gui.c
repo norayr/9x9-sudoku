@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 31 Jan 2010 16:00:26 EET too
+ * Last modified: Sun 31 Jan 2010 20:59:16 EET too
  */
 
 #include <string.h>
@@ -558,10 +558,21 @@ void buildgui(void)
     gtk_widget_show_all (mainwin);
 }
 
+void godir(char * path)
+{
+    char * p = strrchr(path, '/');
+    if (p) {
+	*p = '\0';
+	if (chdir(path) < 0)
+	    die("chdir:");
+	*p = '/';
+    }
+}
 
 int main(int argc, char * argv[])
 {
     init_G();
+    godir(argv[0]);
     /* Initialize i18n support */
     gtk_set_locale ();
 
