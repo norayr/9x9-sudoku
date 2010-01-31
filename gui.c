@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 31 Jan 2010 20:59:16 EET too
+ * Last modified: Sun 31 Jan 2010 23:17:59 EET too
  */
 
 #include <string.h>
@@ -269,13 +269,15 @@ void handle_line(char * stri, int len)
 	    x = str[1] - '0' ; y = str[2] - '0';
 	    if (str[4] < '0' || str[4] > '9') continue; // ignore message
 
-	    switch (str[3]) {
-	    case '/': T.table[x][y].value = - (str[4] - '0'); break;
-	    case '+': T.table[x][y].value = + (str[4] - '0'); break;
-	    case '.': T.table[x][y].value = 0;
+	    int v = str[4] - '0';
+	    if (v == 0)
 		memset(&T.table[x][y].notes, 0, sizeof T.table[x][y].notes);
-		for (int i = 4; str[i] >= '0' && str[i] <= '8'; i++)
-		    T.table[x][y].notes[str[i] - '0'] = 1;
+	    switch (str[3]) {
+	    case '/': T.table[x][y].value = - v; break;
+	    case '+': T.table[x][y].value = + v; break;
+	    case '.': T.table[x][y].value = 0;
+		for (int i = 4; str[i] >= '1' && str[i] <= '9'; i++)
+		    T.table[x][y].notes[str[i] - '1'] = 1;
 		break;
 	    }
 	    draw_block(x, y);
