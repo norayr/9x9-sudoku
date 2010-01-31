@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 30 Jan 2010 23:19:53 EET too
+ * Last modified: Sun 31 Jan 2010 16:00:26 EET too
  */
 
 #include <string.h>
@@ -184,12 +184,12 @@ void draw_block(int ax, int ay)
     if (value < 0) {
 	pango_layout_set_font_description (W.layout, W.fd3);
 	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_red);
-	draw_char(x + 15, y + 7, '1' - value);
+	draw_char(x + 15, y + 7, '0' - value);
     }
     else if (value > 0) {
 	pango_layout_set_font_description (W.layout, W.fd3);
 	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
-	draw_char(x + 15, y + 7, '1' + value);
+	draw_char(x + 15, y + 7, '0' + value);
     }
     else { /* value == 0 */
 	pango_layout_set_font_description (W.layout, W.fd1);
@@ -267,7 +267,7 @@ void handle_line(char * stri, int len)
 	    if (str[1] < '0' || str[1] > '8') continue; // ignore message
 	    if (str[2] < '0' || str[2] > '8') continue; // ignore message
 	    x = str[1] - '0' ; y = str[2] - '0';
-	    if (str[4] < '0' || str[4] > '8') continue; // ignore message
+	    if (str[4] < '0' || str[4] > '9') continue; // ignore message
 
 	    switch (str[3]) {
 	    case '/': T.table[x][y].value = - (str[4] - '0'); break;

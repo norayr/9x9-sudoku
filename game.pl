@@ -8,23 +8,20 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sat 30 Jan 2010 23:15:36 EET too
+# Last modified: Sun 31 Jan 2010 16:05:03 EET too
 
 use strict;
 use warnings;
 
 $| = 1;
 
-#print "foo\n";
-#print "ar\n";
-
-my $pbx = 0;
-my $pby = 0;
+my $pbx = 4;
+my $pby = 1;
 my $pbs = 0;
 my $pbv = 0;
 
 while (<STDIN>) {
-    #print STDERR "----------------perl input: $_\n";
+    print STDERR "----------------perl input: $_\n";
     my ($w, $x, $y, @r) = split;
 
     if ($w eq '*') { # button
@@ -37,10 +34,11 @@ while (<STDIN>) {
 	    if ($pbs) {	print "*$x$y+\n"; $pbs = 0; }
 	    else {	print "*$x$y.\n"; $pbs = 1; }
 	}
-	$pbv = $x + $y * 5;
+	$pbv = $x + $y * 5 + 1;
+	$pbv = 0 if $pbv > 9;
     }
     elsif ($w eq '#') {
-	    print "#$x$y/$pbv\n";
+	    print "#$x$y+$pbv\n";
     }
 }
 
