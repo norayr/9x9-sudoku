@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 31 Jan 2010 23:22:01 EET too
+# Last modified: Sun 31 Jan 2010 23:43:08 EET too
 
 use strict;
 use warnings;
@@ -102,13 +102,11 @@ while (<STDIN>) {
     if ($w eq '*') { # button
 	if ($pbx != $x || $pby != $y) {
 	    print "*$pbx$pby/\n";
-	    print "*$x$y+\n";
-	    $pbx = $x; $pby = $y; $pbs = 0;
+	    #print "*$x$y+\n";
+	    $pbx = $x; $pby = $y; $pbs = !$pbs; # keep same.
 	}
-	else {
-	    if ($pbs) {	print "*$x$y+\n"; $pbs = 0; }
-	    else {	print "*$x$y.\n"; $pbs = 1; }
-	}
+	if ($pbs) { print "*$x$y+\n"; $pbs = 0; }
+	else { print "*$x$y.\n"; $pbs = 1; }
 	$bv = $x + $y * 5 + 1;
 	$bv = 0 if $bv > 9;
     }
