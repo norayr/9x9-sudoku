@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 31 Jan 2010 23:13:05 EET too
+# Last modified: Sun 31 Jan 2010 23:22:01 EET too
 
 use strict;
 use warnings;
@@ -129,9 +129,15 @@ while (<STDIN>) {
 	if (! ref $v) {
 	    next if $v < 0; # initial value.
 	    if ($bv && $v > 0) {
-		if ($bv == $v && $pmx == $x && $pmy == $y) {
-		    $table[$x][$y] = $pmv;
-		    print "#$x$y.", join '', @{$pmv}, "\n";
+		if ($bv == $v) {
+		    if ($pmx == $x && $pmy == $y) {
+			$table[$x][$y] = $pmv;
+			print "#$x$y.", join '', @{$pmv}, "\n";
+		    }
+		    else {
+			$table[$x][$y] = 0;
+			print "#$x$y+0\n";
+		    }
 		}
 		next;
 	    }
