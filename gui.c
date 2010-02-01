@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 31 Jan 2010 23:50:23 EET too
+ * Last modified: Mon 01 Feb 2010 20:41:14 EET too
  */
 
 #include <string.h>
@@ -60,16 +60,6 @@ typedef enum { false = 0, true = 1 } bool;
 #endif
 #define dfc0(x) do {} while (0)
 
-#if MAEMO
-gboolean is_portrait(void)
-{
-    int width = gdk_screen_get_width(W.screen);
-    int height = gdk_screen_get_height(W.screen);
-
-    return width < height;
-}
-#endif
-
 /* globals, except widgets */
 struct {
     //const char * prgname;
@@ -93,6 +83,16 @@ struct {
     PangoRenderer * renderer;
     GdkDrawable * drawable;
 } W;
+
+#if MAEMO
+gboolean is_portrait(void)
+{
+    int width = gdk_screen_get_width(W.screen);
+    int height = gdk_screen_get_height(W.screen);
+
+    return width < height;
+}
+#endif
 
 #define DA_HEIGHT 744
 #define DA_WIDTH 480
@@ -172,7 +172,7 @@ void draw_char(int x, int y, char c)
 }
 
 
-void draw_block(int ax, int ay)
+void draw_box(int ax, int ay)
 {
     int x = T.table[ax][ay].x;
     int y = T.table[ax][ay].y;
@@ -263,7 +263,7 @@ void handle_line(char * stri, int len)
 	str = get_token(&stri, &len);
 
 	switch (str[0]) {
-	case '#': // block
+	case '#': // box
 	    if (str[1] < '0' || str[1] > '8') continue; // ignore message
 	    if (str[2] < '0' || str[2] > '8') continue; // ignore message
 	    x = str[1] - '0' ; y = str[2] - '0';
@@ -278,7 +278,7 @@ void handle_line(char * stri, int len)
 		    T.table[x][y].notes[str[i] - '1'] = 1;
 		break;
 	    }
-	    draw_block(x, y);
+	    draw_box(x, y);
 	    break;
 	case '*': // button
 	    if (str[1] < '0' || str[1] > '4') continue; // ignore message
@@ -443,7 +443,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     for (i = 0; i < 9; i++)
 	for (j = 0; j < 9; j++)
-	    draw_block(i, j);
+	    draw_box(i, j);
 
     for (i = 0; i < 5; i++)
 	for (j = 0; j < 2; j++)
