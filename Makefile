@@ -48,3 +48,4 @@ down64.c down64.h: down64src.c
 
 clean distclean:
 	rm -f gui *.o tile50.c tile50.h up64.c up64.h down64.c down64.h *~
+	-debian/rules clean
