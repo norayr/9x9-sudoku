@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 31 Jan 2010 23:43:08 EET too
+# Last modified: Tue 02 Feb 2010 21:28:39 EET too
 
 use strict;
 use warnings;
@@ -112,7 +112,7 @@ while (<STDIN>) {
     }
     elsif ($w eq '#') {
 	my $v = $table[$x][$y];
-	if ($pbs) { # multi...
+	if ($pbs && $bv) { # multi... (and not [ ] button)
 	    unless (ref $v) {
 		next if $v != 0;
 		$v = [ '', '', '', '', '', '', '', '', '', 0 ];
@@ -126,16 +126,14 @@ while (<STDIN>) {
 	# else
 	if (! ref $v) {
 	    next if $v < 0; # initial value.
-	    if ($bv && $v > 0) {
-		if ($bv == $v) {
-		    if ($pmx == $x && $pmy == $y) {
-			$table[$x][$y] = $pmv;
-			print "#$x$y.", join '', @{$pmv}, "\n";
-		    }
-		    else {
-			$table[$x][$y] = 0;
-			print "#$x$y+0\n";
-		    }
+	    if ($bv == $v) {
+		if ($pmx == $x && $pmy == $y) {
+		    $table[$x][$y] = $pmv;
+		    print "#$x$y.", join '', @{$pmv}, "\n";
+		}
+		else {
+		    $table[$x][$y] = 0;
+		    print "#$x$y+0\n";
 		}
 		next;
 	    }
