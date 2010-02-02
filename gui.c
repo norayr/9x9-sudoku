@@ -5,7 +5,7 @@
  WARN="$WARN -W -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
  case $1 in '') set x -O2 ### set x -ggdb;
 	shift ;; esac;
- FLAGS=`pkg-config --cflags hildon-1` || \
+ FLAGS=`pkg-config --cflags hildon-1 libosso` || \
  FLAGS=`pkg-config --cflags gtk+-2.0`\ -DNOTMAEMO
  set -x; ${CC:-gcc} -c -std=gnu99 $WARN "$@" "$0" $FLAGS
  exit $?
@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Mon 01 Feb 2010 20:41:14 EET too
+ * Last modified: Tue 02 Feb 2010 16:21:14 EET too
  */
 
 #include <string.h>
@@ -42,6 +42,7 @@ extern char ** environ;
 //#include <hildon/hildon-banner.h>
 #include <hildon/hildon-gtk.h>
 #include <hildon/hildon-main.h>
+#include <libosso.h>
 #endif
 
 #include "lineread.h"
@@ -172,7 +173,7 @@ void draw_char(int x, int y, char c)
 }
 
 
-void draw_box(int ax, int ay)
+void draw_block(int ax, int ay)
 {
     int x = T.table[ax][ay].x;
     int y = T.table[ax][ay].y;
@@ -263,7 +264,7 @@ void handle_line(char * stri, int len)
 	str = get_token(&stri, &len);
 
 	switch (str[0]) {
-	case '#': // box
+	case '#': // block
 	    if (str[1] < '0' || str[1] > '8') continue; // ignore message
 	    if (str[2] < '0' || str[2] > '8') continue; // ignore message
 	    x = str[1] - '0' ; y = str[2] - '0';
@@ -278,7 +279,7 @@ void handle_line(char * stri, int len)
 		    T.table[x][y].notes[str[i] - '1'] = 1;
 		break;
 	    }
-	    draw_box(x, y);
+	    draw_block(x, y);
 	    break;
 	case '*': // button
 	    if (str[1] < '0' || str[1] > '4') continue; // ignore message
@@ -443,7 +444,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     for (i = 0; i < 9; i++)
 	for (j = 0; j < 9; j++)
-	    draw_box(i, j);
+	    draw_block(i, j);
 
     for (i = 0; i < 5; i++)
 	for (j = 0; j < 2; j++)
@@ -574,7 +575,7 @@ int main(int argc, char * argv[])
     init_G();
     godir(argv[0]);
     /* Initialize i18n support */
-    gtk_set_locale ();
+    // gtk_set_locale (); not needed -- all strings from perl
 
     /* Initialize the widget set */
 #if MAEMO
@@ -582,14 +583,19 @@ int main(int argc, char * argv[])
 #else
     gtk_init(&argc, &argv);
 #endif
-
+#if MAEMO
+    /* osso... */
+    osso_context_t *
+        osso_context = osso_initialize("org.maemo.thumb_sudoku","1.0",1,null);
+#endif
     buildgui();
 
     start_game();
 
-    /* Enter the main event loop, and wait for user interaction */
     gtk_main ();
+#if MAEMO
+    osso_deinitialize(osso_context);
+#endif
 
-    /* The user lost interest */
     return 0;
 }

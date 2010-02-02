@@ -7,10 +7,24 @@ OBJ=$(SRC:%.c=%.o)
 
 
 gui: $(OBJ)
-	FLAGS=`pkg-config --libs hildon-1` || \
+	FLAGS=`pkg-config --libs hildon-1 libosso` || \
 	FLAGS=`pkg-config --libs gtk+-2.0`\ -DNOTMAEMO; set -x;\
 	gcc -o $@ $(OBJ) $$FLAGS
 
+FILE_PNG64 = thumb-sudoku-64.png
+FILE_DESKTOP = thumb-sudoku.desktop
+FILE_SERVICE = thumb-sudoku.service
+
+install_maemo:
+	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/64x64/apps
+	cp $(FILE_PNG64) $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/ma	
+	mkdir -p $(DESTDIR)/usr/share/applications/hildon
+	cp $(FILE_DESKTOP) $(DESTDIR)/usr/share/applications/hildon
+	mkdir -p $(DESTDIR)/usr/share/dbus-1/services
+	cp $(FILE_SERVICE) $(DESTDIR)/usr/share/dbus-1/services
+	mkdir -p $(DESTDIR)/opt/maemo/usr/lib/thumb_sudoku
+	cp gui game.pl precalc \
+		$(DESTDIR)/opt/maemo/usr/lib/thumb_sudoku
 
 gui.o: gui.c tile50.h up64.h down64.h
 	sh $<
@@ -32,6 +46,5 @@ up64.c up64.h: up64src.c
 down64.c down64.h: down64src.c
 	perl readrgbc.pl down64 $<
 
-
-clean:
+clean distclean:
 	rm -f gui *.o tile50.c tile50.h up64.c up64.h down64.c down64.h *~
