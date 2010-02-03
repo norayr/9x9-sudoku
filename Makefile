@@ -49,3 +49,11 @@ down64.c down64.h: down64src.c
 clean distclean:
 	rm -f gui *.o tile50.c tile50.h up64.c up64.h down64.c down64.h *~
 	-debian/rules clean
+
+mad_srcpkg: # Published MADDE images do not (yet) have 'fakeroot' command...
+	mad dpkg-buildpackage -sa -S -I.git
+
+bumprev: # 0ld Amiga term...
+	perl -pi -e 'BEGIN { chomp($$date=`date -R`); $$set = 0; } \
+	 s/(\d+)\.(\d+)/sprintf "$$1.%d",$$2 + 1/e unless $$set; \
+	 s/>.*/>  $$date/, $$set = 1 if (/--.*>/ && !$$set);' debian/changelog
