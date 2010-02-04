@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Tue 02 Feb 2010 21:28:39 EET too
+# Last modified: Thu 04 Feb 2010 13:39:39 EET too
 
 use strict;
 use warnings;
@@ -138,7 +138,13 @@ while (<STDIN>) {
 		next;
 	    }
 	}
-	next unless $bv == 0 || number_fit $x, $y;
+	if ($bv != 0 && ! number_fit $x, $y) {
+	    if (ref $v) {
+		$table[$x][$y]->[$bv] = '';
+		print "#$x$y.", join '', @{$table[$x][$y]}, "\n";
+	    }
+	    next;
+	}
 	$pmx = $x, $pmy = $y, $pmv = $v if ref $v;
 	print "#$x$y+$bv\n";
 	$table[$x][$y] = $bv;
