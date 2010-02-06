@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 02 Feb 2010 16:21:14 EET too
+ * Last modified: Sat 06 Feb 2010 23:42:52 EET too
  */
 
 #include <string.h>
@@ -166,12 +166,13 @@ struct {
 
 void draw_char(int x, int y, char c)
 {
-    pango_layout_set_text (W.layout, &c, 1);
+    dfc0(("draw_char(%d %d '%c')\n", x, y, c));
 
-    pango_renderer_draw_layout (W.renderer, W.layout,
-				x * PANGO_SCALE, y * PANGO_SCALE);
+    pango_layout_set_text(W.layout, &c, 1);
+
+    pango_renderer_draw_layout(W.renderer, W.layout,
+			       x * PANGO_SCALE, y * PANGO_SCALE);
 }
-
 
 void draw_block(int ax, int ay)
 {
@@ -183,17 +184,17 @@ void draw_block(int ax, int ay)
 
     gint8 value = T.table[ax][ay].value;
     if (value < 0) {
-	pango_layout_set_font_description (W.layout, W.fd3);
+	pango_layout_set_font_description(W.layout, W.fd3);
 	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_red);
 	draw_char(x + 15, y + 7, '0' - value);
     }
     else if (value > 0) {
-	pango_layout_set_font_description (W.layout, W.fd3);
+	pango_layout_set_font_description(W.layout, W.fd3);
 	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
 	draw_char(x + 15, y + 7, '0' + value);
     }
     else { /* value == 0 */
-	pango_layout_set_font_description (W.layout, W.fd1);
+	pango_layout_set_font_description(W.layout, W.fd1);
 	gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
 
 	if (T.table[ax][ay].notes[0]) draw_char(x + 6, y + 1, '1');
@@ -226,11 +227,11 @@ void draw_button(int ax, int ay)
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
 
     if (T.buttons[ax][ay].state >= 0) {
-	pango_layout_set_font_description (W.layout, W.fd4);
+	pango_layout_set_font_description(W.layout, W.fd4);
 	x = x + 18; y = y + 4;
     }
     else {
-	pango_layout_set_font_description (W.layout, W.fd2);
+	pango_layout_set_font_description(W.layout, W.fd2);
 	x = x + 24; y = y + 18;
     }
     draw_char(x, y, T.buttons[ax][ay].value);
@@ -259,6 +260,9 @@ void handle_line(char * stri, int len)
     (void)write(1, stri, len);
     const char * str;
     int x, y;
+
+    // shared entity...
+    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), W.drawable);
 
     while (len) {
 	str = get_token(&stri, &len);
@@ -404,6 +408,7 @@ void init_draw(GtkWidget * widget)
 
     W.screen = gdk_screen_get_default();
     W.renderer = gdk_pango_renderer_get_default(W.screen);
+    // shared entity...
     gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), W.drawable);
 
     W.layout = gtk_widget_create_pango_layout(widget, "");
@@ -416,13 +421,13 @@ void init_draw(GtkWidget * widget)
 
 void render_text(int x, int y, PangoFontDescription * fd, GdkGC * gc, char * t)
 {
-    pango_layout_set_font_description (W.layout, fd);
+    pango_layout_set_font_description(W.layout, fd);
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), gc);
 
-    pango_layout_set_text (W.layout, t, strlen(t));
+    pango_layout_set_text(W.layout, t, strlen(t));
 
-    pango_renderer_draw_layout (W.renderer, W.layout,
-				x * PANGO_SCALE, y * PANGO_SCALE);
+    pango_renderer_draw_layout(W.renderer, W.layout,
+			       x * PANGO_SCALE, y * PANGO_SCALE);
 }
 
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
@@ -432,6 +437,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     int i;
     int j;
 
+    dfc(("exposed\n"));
 #if MAEMO
     if (! is_portrait() )
 	return;
@@ -439,8 +445,9 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
 
-    pango_layout_set_font_description (W.layout, W.fd1);
+    pango_layout_set_font_description(W.layout, W.fd1);
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_black);
+    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(W.renderer), W.drawable);
 
     for (i = 0; i < 9; i++)
 	for (j = 0; j < 9; j++)
@@ -450,7 +457,6 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	for (j = 0; j < 2; j++)
 	    draw_button(i, j);
 
-    printf("exposed\n");
     return true;
 }
 
@@ -509,15 +515,27 @@ void darea_realize(GtkWidget * w, gpointer user_data)
 
     gtk_signal_connect(GTK_OBJECT(w), "button-press-event",
 		       GTK_SIGNAL_FUNC(darea_button_press), null);
-
 }
-
-
 
 void save_and_quit(void)
 {
     // script will save it's state when fd closes
     gtk_main_quit();
+}
+
+/* make functions clear_menu() and append_menu() */
+GtkWidget * make_menu(void)
+{
+#if MAEMO
+    return null; // tbi.
+#else
+    GtkBox * menu = GTK_BOX(gtk_hbox_new(false, 0));
+
+    GtkWidget * button = gtk_button_new_with_label("New Game");
+    gtk_box_pack_start(menu, button, false, 0, 4);
+    printf("-___________ %p %p\n", menu, button);
+    return GTK_WIDGET(menu);
+#endif
 }
 
 /* http://talk.maemo.org/showthread.php?p=461531 */
@@ -547,16 +565,24 @@ void buildgui(void)
     hildon_gtk_window_set_portrait_flags(GTK_WINDOW(mainwin),
 					 HILDON_PORTRAIT_MODE_REQUEST);
 #endif
+    GtkWidget * menu = make_menu();
 
     GtkWidget * da = gtk_drawing_area_new();
     gtk_widget_set_size_request(da, DA_WIDTH, DA_HEIGHT);
     gtk_signal_connect(GTK_OBJECT(da), "realize",
 		       GTK_SIGNAL_FUNC(darea_realize), null);
 
+#if MAEMO
     gtk_container_add(GTK_CONTAINER(mainwin), da);
+#else
+    GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 0));
+    gtk_container_add(GTK_CONTAINER(mainwin), vbox);
+    gtk_box_pack_start(vbox, menu, false, 0, 0);
+    gtk_box_pack_start(vbox, da, false, 0, 0);
+#endif
 
     /* Show the application window */
-    gtk_widget_show_all (mainwin);
+    gtk_widget_show_all(mainwin);
 }
 
 void godir(char * path)
@@ -579,7 +605,7 @@ int main(int argc, char * argv[])
 
     /* Initialize the widget set */
 #if MAEMO
-    hildon_gtk_init (&argc, &argv);
+    hildon_gtk_init(&argc, &argv);
 #else
     gtk_init(&argc, &argv);
 #endif
@@ -592,7 +618,7 @@ int main(int argc, char * argv[])
 
     start_game();
 
-    gtk_main ();
+    gtk_main();
 #if MAEMO
     osso_deinitialize(osso_context);
 #endif
