@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 21 Feb 2010 19:33:46 EET too
+# Last modified: Mon 22 Feb 2010 00:22:02 EET too
 
 use strict;
 use warnings;
@@ -24,17 +24,52 @@ my (@table, $pmx, $pmy, $pmv);
 sub init_puzzle() 
 {
     ($pmx, $pmy, $pmv) = ( 9, 9, undef ); # old multi accidentaly overwritten.
-    for (1..9)
-    {
-	push @table, [ 0, 0, 0,  0, 0, 0,  0, 0, 0 ];
-    }
+
+    push @table, [ 0, 0, 0,  0, 0, 0,  0, 0, 0 ] for (1..9);
+
 }
 
 # table content: negative -- generated, positive -- user input, ref -- multiple
 
+sub read_puzzle()
+{
+    open I, '<', "$ENV{HOME}/.config/thumb_sudoku.data" or return 0;
+    $_ = <I>;
+    return 0 unless /^thumb sudoku data format 1\s/;
+
+    print 123, "\n";
+    sub asp($) {
+	my @a = split '', $_[0];
+	return \@a;
+    }
+    while (<I>) {
+	my @c = split;
+	my $key = shift @c;
+	my $val = shift @c;
+	if ($key eq 'row')  { 
+	    my @row;
+	    for (0..8) {
+		if ($c[$_] < 0 || length $c[$_] == 1) { 
+		    push @row, $c[$_]; 
+		}
+		else {
+		    push @row, asp $c[$_]; 
+		}
+	    }
+	    $table[$val] = \@row;
+	}
+	elsif ($key eq 'pbx') { $pbx = $val + 0; }
+	elsif ($key eq 'pby') { $pby = $val + 0; }
+	elsif ($key eq 'bv')  { $bv  = $val + 0; }
+	elsif ($key eq 'pmx') { $pmx = $val + 0; }
+	elsif ($key eq 'pmy') { $pmy = $val + 0; }
+	elsif ($key eq 'pmv') { $pmv = asp $val; }
+    }
+    return 1;
+}    
+
 sub gen_puzzle()
 {
-    init_puzzle;
     open I, '<', 'precalc' or die;
     my $line = int (rand 1000);
     while (<I>)
@@ -57,18 +92,21 @@ sub send_puzzle()
     my @list;
     for (my $i = 0; $i < 9; $i++) {
 	for (my $j = 0; $j < 9; $j++) {
-	    my $v = - $table[$i][$j];
-	    if ($v != 0) {
-		push @list, "#$i$j/$v";
+	    my $v = $table[$i][$j];
+	    if (ref $v) {
+		push @list, "#$i$j." . join '', @{$v};
 	    }
+	    elsif ($v < 0) { $v = -$v; push @list, "#$i$j/$v"; }
+	    elsif ($v > 0) { push @list, "#$i$j+$v"; }
 	}
     }
     print "@list\n";
 }
 
-gen_puzzle;
+init_puzzle;
+read_puzzle or gen_puzzle;
 send_puzzle;
-print "*41+\n";
+print "*$pbx$pby", $pbs? '.': '+', "\n";
 
 sub num_match($$)
 {
@@ -154,7 +192,34 @@ while (<STDIN>) {
     }
     if ($w eq '@') { # new game
 	print "@\n";
+	init_puzzle;
 	gen_puzzle;
 	send_puzzle;
+	print "*$pbx$pby", $pbs? '.': '+', "\n";
     }
+}
+
+# write puzzle after eof.
+
+chdir $ENV{'HOME'} or die $!;
+unless (-d '.config') {
+    mkdir '.config' or die $!;
+}
+chdir '.config';
+open O, '>', 'thumb_sudoku.data' or die $!;
+select O;
+print "thumb sudoku data format 1\n";
+print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
+
+print 'pmv ', join '', @{$pmv}, "\n" if ref $pmv;
+
+my ($i, $tcv);
+for (0..8) {
+    print "row $_ ";
+    for ($i = 0; $i < 9; $i++) {
+	$tcv = $table[$_][$i];
+	if (ref $tcv) { print join '', @{$tcv}, ' '; }
+	else { print $tcv, ' '; }
+    }
+    print "\n";
 }

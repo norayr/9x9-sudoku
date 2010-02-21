@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 21 Feb 2010 20:14:38 EET too
+ * Last modified: Mon 22 Feb 2010 00:06:30 EET too
  */
 
 #include <string.h>
@@ -450,7 +450,6 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     if (! is_portrait() )
 	return;
 #else
-    dfc(("foo\n"));
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
 
