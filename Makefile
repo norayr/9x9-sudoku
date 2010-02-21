@@ -11,13 +11,15 @@ gui: $(OBJ)
 	FLAGS=`pkg-config --libs gtk+-2.0`\ -DNOTMAEMO; set -x;\
 	gcc -o $@ $(OBJ) $$FLAGS
 
-FILE_PNG64 = thumb-sudoku-64.png
+FILE_PNG = thumb-sudoku.png
+FILE_PNG64 = $(FILE_PNG:%.png=%-64.png)
 FILE_DESKTOP = thumb-sudoku.desktop
 FILE_SERVICE = thumb-sudoku.service
 
 install_maemo:
 	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/64x64/apps
-	cp $(FILE_PNG64) $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/ma	
+	cp $(FILE_PNG64) \
+		$(DESTDIR)/usr/share/icons/hicolor/64x64/apps/$(FILE_PNG)
 	mkdir -p $(DESTDIR)/usr/share/applications/hildon
 	cp $(FILE_DESKTOP) $(DESTDIR)/usr/share/applications/hildon
 	mkdir -p $(DESTDIR)/usr/share/dbus-1/services
