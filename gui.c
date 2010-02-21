@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 06 Feb 2010 23:42:52 EET too
+ * Last modified: Sun 21 Feb 2010 20:14:38 EET too
  */
 
 #include <string.h>
@@ -74,6 +74,8 @@ struct {
     GdkGC * gc_red;
     GdkGC * gc_white;
     GdkGC * gc_black;
+
+    GtkWidget * da;
 
     PangoFontDescription * fd1;
     PangoFontDescription * fd2;
@@ -254,6 +256,8 @@ const char * get_token(char ** strp, int * lenp)
     return s;
 }
 
+void init_tables(void);
+
 void handle_line(char * stri, int len)
 {
     dfc(("handle_line (len %d)\n", len));
@@ -296,6 +300,10 @@ void handle_line(char * stri, int len)
 	    case '.': T.buttons[x][y].state =-1; break;
 	    }
 	    draw_button(x, y);
+	    break;
+	case '@': // clear
+	    init_tables();
+	    gtk_widget_queue_draw(W.da);
 	    break;
 	}
     }
@@ -442,6 +450,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     if (! is_portrait() )
 	return;
 #else
+    dfc(("foo\n"));
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
 
@@ -523,6 +532,11 @@ void save_and_quit(void)
     gtk_main_quit();
 }
 
+void new_game_clicked(void)
+{
+    fdprintf1k(G.lr.fd, "@\n");
+}
+
 /* make functions clear_menu() and append_menu() */
 GtkWidget * make_menu(void)
 {
@@ -532,6 +546,8 @@ GtkWidget * make_menu(void)
     GtkBox * menu = GTK_BOX(gtk_hbox_new(false, 0));
 
     GtkWidget * button = gtk_button_new_with_label("New Game");
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(new_game_clicked), null);
     gtk_box_pack_start(menu, button, false, 0, 4);
     printf("-___________ %p %p\n", menu, button);
     return GTK_WIDGET(menu);
@@ -567,18 +583,18 @@ void buildgui(void)
 #endif
     GtkWidget * menu = make_menu();
 
-    GtkWidget * da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(da, DA_WIDTH, DA_HEIGHT);
-    gtk_signal_connect(GTK_OBJECT(da), "realize",
+    W.da = gtk_drawing_area_new();
+    gtk_widget_set_size_request(W.da, DA_WIDTH, DA_HEIGHT);
+    gtk_signal_connect(GTK_OBJECT(W.da), "realize",
 		       GTK_SIGNAL_FUNC(darea_realize), null);
 
 #if MAEMO
-    gtk_container_add(GTK_CONTAINER(mainwin), da);
+    gtk_container_add(GTK_CONTAINER(mainwin), W.da);
 #else
     GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 0));
     gtk_container_add(GTK_CONTAINER(mainwin), vbox);
     gtk_box_pack_start(vbox, menu, false, 0, 0);
-    gtk_box_pack_start(vbox, da, false, 0, 0);
+    gtk_box_pack_start(vbox, W.da, false, 0, 0);
 #endif
 
     /* Show the application window */

@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 04 Feb 2010 13:39:39 EET too
+# Last modified: Sun 21 Feb 2010 19:33:46 EET too
 
 use strict;
 use warnings;
@@ -20,18 +20,21 @@ my ($pbx, $pby) = (4, 1); # button x&y, for reset.
 my $pbs = 0; # button state
 my $bv = 0; # button value
 
-my ($pmx, $pmy, $pmv) = ( 9, 9, undef ); # old multi accidentaly overwritten.
-
-my @table;
-for (1..9)
+my (@table, $pmx, $pmy, $pmv);
+sub init_puzzle() 
 {
-    push @table, [ 0, 0, 0,  0, 0, 0,  0, 0, 0 ];
+    ($pmx, $pmy, $pmv) = ( 9, 9, undef ); # old multi accidentaly overwritten.
+    for (1..9)
+    {
+	push @table, [ 0, 0, 0,  0, 0, 0,  0, 0, 0 ];
+    }
 }
 
 # table content: negative -- generated, positive -- user input, ref -- multiple
 
 sub gen_puzzle()
 {
+    init_puzzle;
     open I, '<', 'precalc' or die;
     my $line = int (rand 1000);
     while (<I>)
@@ -148,5 +151,10 @@ while (<STDIN>) {
 	$pmx = $x, $pmy = $y, $pmv = $v if ref $v;
 	print "#$x$y+$bv\n";
 	$table[$x][$y] = $bv;
+    }
+    if ($w eq '@') { # new game
+	print "@\n";
+	gen_puzzle;
+	send_puzzle;
     }
 }
