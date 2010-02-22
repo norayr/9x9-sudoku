@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Mon 22 Feb 2010 00:06:30 EET too
+ * Last modified: Mon 22 Feb 2010 20:19:35 EET too
  */
 
 #include <string.h>
@@ -540,17 +540,22 @@ void new_game_clicked(void)
 GtkWidget * make_menu(void)
 {
 #if MAEMO
-    return null; // tbi.
+    HildonAppMenu * menu = HILDON_APP_MENU(hildon_app_menu_new());
+    GtkWidget *button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+    gtk_button_set_label(GTK_BUTTON(button), "New Game");
+    g_signal_connect_after(button, "clicked",
+			   G_CALLBACK(new_game_clicked), null);
+    hildon_app_menu_append (menu, GTK_BUTTON(button));
+    gtk_widget_show_all(GTK_WIDGET(menu));
 #else
     GtkBox * menu = GTK_BOX(gtk_hbox_new(false, 0));
-
     GtkWidget * button = gtk_button_new_with_label("New Game");
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(new_game_clicked), null);
     gtk_box_pack_start(menu, button, false, 0, 4);
     printf("-___________ %p %p\n", menu, button);
-    return GTK_WIDGET(menu);
 #endif
+    return GTK_WIDGET(menu);
 }
 
 /* http://talk.maemo.org/showthread.php?p=461531 */
@@ -588,6 +593,7 @@ void buildgui(void)
 		       GTK_SIGNAL_FUNC(darea_realize), null);
 
 #if MAEMO
+    hildon_window_set_app_menu(HILDON_WINDOW (mainwin), menu);
     gtk_container_add(GTK_CONTAINER(mainwin), W.da);
 #else
     GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 0));
