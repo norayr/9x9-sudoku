@@ -1,3 +1,11 @@
+thumb-sudoku (0.4) unstable; urgency=low
+
+  * Save game state on exit which is loaded at startup
+
+  * Hildon application menu with 'New Game' item
+
+ -- Tomi Ollila <tomi.ollila@iki.fi>  Mon, 22 Feb 2010 20:23:06 +0000
+
 thumb-sudoku (0.3) unstable; urgency=low
 
   * Initial release
