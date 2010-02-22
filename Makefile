@@ -53,6 +53,7 @@ clean distclean:
 	-debian/rules clean
 
 mad_srcpkg: # Published MADDE images do not (yet) have 'fakeroot' command...
+	git status | grep 'directory clean'
 	mad dpkg-buildpackage -sa -S -I.git
 
 bumprev: # 0ld Amiga term...
