@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 25 Feb 2010 21:36:53 EET too
+# Last modified: Thu 25 Feb 2010 21:52:06 EET too
 
 use strict;
 use warnings;
@@ -71,7 +71,7 @@ sub read_puzzle()
 sub gen_puzzle()
 {
     open I, '<', 'precalc' or die;
-    my $line = int (rand 1000);
+    my $line = int (rand 1000) + 1;
     while (<I>)
     {
 	chomp ($line = $_), last if $. == $line;
