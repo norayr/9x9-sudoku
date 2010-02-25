@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 25 Feb 2010 21:52:06 EET too
+# Last modified: Thu 25 Feb 2010 21:57:36 EET too
 
 use strict;
 use warnings;
@@ -24,7 +24,7 @@ my (@table, $pmx, $pmy, $pmv);
 sub init_puzzle() 
 {
     ($pmx, $pmy, $pmv) = ( 9, 9, undef ); # old multi accidentaly overwritten.
-
+    @table = ();
     push @table, [ 0, 0, 0,  0, 0, 0,  0, 0, 0 ] for (1..9);
 
 }
@@ -33,6 +33,7 @@ sub init_puzzle()
 
 sub read_puzzle()
 {
+    init_puzzle;
     open I, '<', "$ENV{HOME}/.config/thumb_sudoku.data" or return 0;
     $_ = <I>;
     return 0 unless /^thumb sudoku data format 1\s/;
@@ -70,6 +71,7 @@ sub read_puzzle()
 
 sub gen_puzzle()
 {
+    init_puzzle;
     open I, '<', 'precalc' or die;
     my $line = int (rand 1000) + 1;
     while (<I>)
@@ -103,7 +105,6 @@ sub send_puzzle()
     print "@list\n";
 }
 
-init_puzzle;
 read_puzzle or gen_puzzle;
 send_puzzle;
 print "*$pbx$pby", $pbs? '.': '+', "\n";
