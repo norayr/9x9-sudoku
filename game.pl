@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 25 Feb 2010 21:57:36 EET too
+# Last modified: Thu 25 Feb 2010 22:00:19 EET too
 
 use strict;
 use warnings;
@@ -193,7 +193,6 @@ while (<STDIN>) {
     }
     if ($w eq '@') { # new game
 	print "@\n";
-	init_puzzle;
 	gen_puzzle;
 	send_puzzle;
 	print "*$pbx$pby", $pbs? '.': '+', "\n";
