@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Mon 22 Feb 2010 20:19:35 EET too
+ * Last modified: Sun 28 Feb 2010 10:50:18 EET too
  */
 
 #include <string.h>
@@ -283,7 +283,7 @@ void handle_line(char * stri, int len)
 	    case '/': T.table[x][y].value = - (str[4] - '0'); break;
 	    case '+': T.table[x][y].value = + (str[4] - '0'); break;
 	    case '.': T.table[x][y].value = 0;
-		for (int i = 4; str[i] >= '1' && str[i] <= '9'; i++)
+		for (int i = 5; str[i] >= '1' && str[i] <= '9'; i++)
 		    T.table[x][y].notes[str[i] - '1'] = 1;
 		break;
 	    }

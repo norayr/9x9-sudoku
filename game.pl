@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 25 Feb 2010 22:00:19 EET too
+# Last modified: Sun 28 Feb 2010 10:47:11 EET too
 
 use strict;
 use warnings;
@@ -39,8 +39,8 @@ sub read_puzzle()
     return 0 unless /^thumb sudoku data format 1\s/;
 
     sub asp($) {
-	my @a = ( '', '', '', '', '', '', '', '', '', 0 );
-	foreach (split '', $_[0]) { $a[$_ - 1] = $_ + 0 if $_ > 0; }
+	my @a = ( 0, '', '', '', '', '', '', '', '', '');
+	foreach (split '', $_[0]) { $a[$_] = $_ + 0 if $_ > 0; }
 	return \@a;
     }
     while (<I>) {
@@ -157,7 +157,7 @@ while (<STDIN>) {
 	if ($pbs && $bv) { # multi... (and not [ ] button)
 	    unless (ref $v) {
 		next if $v != 0;
-		$v = [ '', '', '', '', '', '', '', '', '', 0 ];
+		$v = [ 0, '', '', '', '', '', '', '', '', '' ];
 		$table[$x][$y] = $v;
 	    }
 	    if ($v->[$bv]) { $table[$x][$y]->[$bv] = ''; }
