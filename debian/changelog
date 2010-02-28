@@ -1,3 +1,9 @@
+thumb-sudoku (0.5) unstable; urgency=low
+
+  * Fixed bug when loading (small number) reference value from saved state
+
+ -- Tomi Ollila <tomi.ollila@iki.fi>  Fri, 26 Feb 2010 08:29:44 +0200
+
 thumb-sudoku (0.4) unstable; urgency=low
 
   * Save game state on exit which is loaded at startup
