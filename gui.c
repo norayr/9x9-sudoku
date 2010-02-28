@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 28 Feb 2010 10:50:18 EET too
+ * Last modified: Sun 28 Feb 2010 16:42:22 EET too
  */
 
 #include <string.h>
@@ -75,6 +75,7 @@ struct {
     GdkGC * gc_white;
     GdkGC * gc_black;
 
+    GtkWidget * mainwin;
     GtkWidget * da;
 
     PangoFontDescription * fd1;
@@ -531,10 +532,26 @@ void save_and_quit(void)
     gtk_main_quit();
 }
 
+
 void new_game_clicked(void)
 {
-    fdprintf1k(G.lr.fd, "@\n");
+#if 0
+#define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
+    GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
+						W.mainwin, DIALOGFLAGS,
+						"Easy", 1, "Medium", 2,
+						"Hard", 3, "Very Hard", 4,
+						null);
+#undef DIALOFFLAGS
+    int rv = gtk_dialog_run(d);
+    if (rv >= 1 && rv <= 4)
+	fdprintf1k(G.lr.fd, "@ %d\n", rv);
+    gtk_widget_destroy(d);
+#else
+	fdprintf1k(G.lr.fd, "@\n");
+#endif
 }
+
 
 /* make functions clear_menu() and append_menu() */
 GtkWidget * make_menu(void)
@@ -566,13 +583,13 @@ void buildgui(void)
 
     /* Create the main window */
 #if MAEMO
-    GtkWidget * mainwin = hildon_stackable_window_new();
+    W.mainwin = hildon_stackable_window_new();
 #else
-    GtkWidget * mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    W.mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
-    gtk_window_set_title(GTK_WINDOW(mainwin), "Thumb Sudoku");
-    g_signal_connect(G_OBJECT(mainwin), "delete_event",
+    gtk_window_set_title(GTK_WINDOW(W.mainwin), "Thumb Sudoku");
+    g_signal_connect(G_OBJECT(W.mainwin), "delete_event",
                      G_CALLBACK(save_and_quit), null);
 
 #if 0 // XXX this might be needed...
@@ -580,9 +597,9 @@ void buildgui(void)
 #endif
 
 #if MAEMO
-    //gtk_window_fullscreen (GTK_WINDOW (mainwin));// will make title disappear
+    //gtk_window_fullscreen(GTK_WINDOW(W.mainwin));// will make title disappear
     // portrait mode
-    hildon_gtk_window_set_portrait_flags(GTK_WINDOW(mainwin),
+    hildon_gtk_window_set_portrait_flags(GTK_WINDOW(W.mainwin),
 					 HILDON_PORTRAIT_MODE_REQUEST);
 #endif
     GtkWidget * menu = make_menu();
@@ -593,17 +610,17 @@ void buildgui(void)
 		       GTK_SIGNAL_FUNC(darea_realize), null);
 
 #if MAEMO
-    hildon_window_set_app_menu(HILDON_WINDOW (mainwin), menu);
-    gtk_container_add(GTK_CONTAINER(mainwin), W.da);
+    hildon_window_set_app_menu(HILDON_WINDOW (W.mainwin), menu);
+    gtk_container_add(GTK_CONTAINER(W.mainwin), W.da);
 #else
     GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 0));
-    gtk_container_add(GTK_CONTAINER(mainwin), vbox);
+    gtk_container_add(GTK_CONTAINER(W.mainwin), vbox);
     gtk_box_pack_start(vbox, menu, false, 0, 0);
     gtk_box_pack_start(vbox, W.da, false, 0, 0);
 #endif
 
     /* Show the application window */
-    gtk_widget_show_all(mainwin);
+    gtk_widget_show_all(W.mainwin);
 }
 
 void godir(char * path)
