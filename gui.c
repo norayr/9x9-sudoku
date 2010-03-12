@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sun 28 Feb 2010 16:42:22 EET too
+ * Last modified: Fri 12 Mar 2010 22:26:55 EET too
  */
 
 #include <string.h>
@@ -535,16 +535,16 @@ void save_and_quit(void)
 
 void new_game_clicked(void)
 {
-#if 0
+#if 1
 #define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
     GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
 						W.mainwin, DIALOGFLAGS,
 						"Easy", 1, "Medium", 2,
 						"Hard", 3, "Very Hard", 4,
-						null);
+						"Impossible", 5, null);
 #undef DIALOFFLAGS
     int rv = gtk_dialog_run(d);
-    if (rv >= 1 && rv <= 4)
+    if (rv >= 1 && rv <= 5)
 	fdprintf1k(G.lr.fd, "@ %d\n", rv);
     gtk_widget_destroy(d);
 #else

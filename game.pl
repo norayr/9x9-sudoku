@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sun 28 Feb 2010 10:47:11 EET too
+# Last modified: Fri 12 Mar 2010 22:26:05 EET too
 
 use strict;
 use warnings;
@@ -69,18 +69,13 @@ sub read_puzzle()
     return 1;
 }    
 
-sub gen_puzzle()
+sub gen_puzzle($)
 {
     init_puzzle;
-    open I, '<', 'precalc' or die;
     my $line = int (rand 1000) + 1;
-    while (<I>)
-    {
-	chomp ($line = $_), last if $. == $line;
-    }
-    close I;
+    chomp (my $line = qx(gzip -dc pzl$_[0].gz | sed -n ${line}p));
     $line =~ s/^\S+\s+//;
-    #print "$line\n";
+    #print "$line\n"; 
     my @line = split //, $line;
     my $i = 0;
     foreach (@line) {
@@ -105,7 +100,7 @@ sub send_puzzle()
     print "@list\n";
 }
 
-read_puzzle or gen_puzzle;
+read_puzzle or gen_puzzle 1;
 send_puzzle;
 print "*$pbx$pby", $pbs? '.': '+', "\n";
 
@@ -192,8 +187,10 @@ while (<STDIN>) {
 	$table[$x][$y] = $bv;
     }
     if ($w eq '@') { # new game
+	$x += 0;
+	next if $x < 1 || $x > 5;
 	print "@\n";
-	gen_puzzle;
+	gen_puzzle $x;
 	send_puzzle;
 	print "*$pbx$pby", $pbs? '.': '+', "\n";
     }
