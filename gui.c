@@ -5,8 +5,8 @@
  WARN="$WARN -W -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
  case $1 in '') set x -O2 ### set x -ggdb;
 	shift ;; esac;
- FLAGS=`pkg-config --cflags hildon-1 libosso` || \
- FLAGS=`pkg-config --cflags gtk+-2.0`\ -DNOTMAEMO
+ FLAGS="`pkg-config --cflags hildon-1 libosso` -D G_DISABLE_CAST_CHECKS" ||
+ FLAGS="`pkg-config --cflags gtk+-2.0` -DNOTMAEMO"
  set -x; ${CC:-gcc} -c -std=gnu99 $WARN "$@" "$0" $FLAGS
  exit $?
  */
@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 12 Mar 2010 22:26:55 EET too
+ * Last modified: Mon 22 Mar 2010 17:11:39 EET too
  */
 
 #include <string.h>
