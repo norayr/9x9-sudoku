@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Mon 22 Mar 2010 17:11:39 EET too
+ * Last modified: Sat 10 Apr 2010 14:12:51 EEST too
  */
 
 #include <string.h>
@@ -67,6 +67,7 @@ struct {
     LineRead lr;
     GIOChannel * iochannel;
     bool idlehandler;
+    char bmsg[80];
 } G;
 
 /* widgets (and such)*/
@@ -240,6 +241,20 @@ void draw_button(int ax, int ay)
     draw_char(x, y, T.buttons[ax][ay].value);
 }
 
+void draw_bmsg()
+{
+    dfc0(("draw_bmsg() msg = '%s'\n", G.bmsg));
+
+    pango_layout_set_font_description(W.layout, W.fd2);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_white);
+
+    pango_layout_set_text(W.layout, G.bmsg, strlen(G.bmsg) );
+
+    // XXX calculate length of output for x position, later.
+    pango_renderer_draw_layout(W.renderer, W.layout,
+			       400 * PANGO_SCALE, 712 * PANGO_SCALE);
+}
+
 const char * get_token(char ** strp, int * lenp)
 {
     char * s;
@@ -302,6 +317,11 @@ void handle_line(char * stri, int len)
 	    }
 	    draw_button(x, y);
 	    break;
+	case '>': // new message at bottom right, clear follows...
+	    stri[len - 1] = '\0';
+	    strncpy(G.bmsg, stri + 1, sizeof G.bmsg);
+	    G.bmsg[sizeof G.bmsg - 1] = 0;
+	    return; // eat full line
 	case '@': // clear
 	    init_tables();
 	    gtk_widget_queue_draw(W.da);
@@ -466,6 +486,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	for (j = 0; j < 2; j++)
 	    draw_button(i, j);
 
+    draw_bmsg();
     return true;
 }
 
@@ -539,9 +560,8 @@ void new_game_clicked(void)
 #define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
     GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
 						W.mainwin, DIALOGFLAGS,
-						"Easy", 1, "Medium", 2,
-						"Hard", 3, "Very Hard", 4,
-						"Impossible", 5, null);
+						"1", 1, "2", 2, "3", 3,
+						"4", 4, "5", 5, null);
 #undef DIALOFFLAGS
     int rv = gtk_dialog_run(d);
     if (rv >= 1 && rv <= 5)

@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Fri 12 Mar 2010 22:26:05 EET too
+# Last modified: Sat 10 Apr 2010 14:24:02 EEST too
 
 use strict;
 use warnings;
@@ -19,6 +19,7 @@ $| = 1;
 my ($pbx, $pby) = (4, 1); # button x&y, for reset.
 my $pbs = 0; # button state
 my $bv = 0; # button value
+my $level = 0;
 
 my (@table, $pmx, $pmy, $pmv);
 sub init_puzzle() 
@@ -64,6 +65,7 @@ sub read_puzzle()
 	elsif ($key eq 'bv')  { $bv  = $val + 0; }
 	elsif ($key eq 'pmx') { $pmx = $val + 0; }
 	elsif ($key eq 'pmy') { $pmy = $val + 0; }
+	elsif ($key eq 'level') { $level = $val + 0; }
 	elsif ($key eq 'pmv') { $pmv = asp $val; }
     }
     return 1;
@@ -72,8 +74,9 @@ sub read_puzzle()
 sub gen_puzzle($)
 {
     init_puzzle;
-    my $line = int (rand 1000) + 1;
-    chomp (my $line = qx(gzip -dc pzl$_[0].gz | sed -n ${line}p));
+    my $line = int (rand 900) + 1;
+    $level = $_[0] * 1000 + $line;
+    chomp ($line = qx(gzip -dc pzl$_[0].gz | sed -n ${line}p));
     $line =~ s/^\S+\s+//;
     #print "$line\n"; 
     my @line = split //, $line;
@@ -84,7 +87,7 @@ sub gen_puzzle($)
     }
 }
 
-sub send_puzzle()
+sub send_puzzle($)
 {
     my @list;
     for (my $i = 0; $i < 9; $i++) {
@@ -97,11 +100,14 @@ sub send_puzzle()
 	    elsif ($v > 0) { push @list, "#$i$j+$v"; }
 	}
     }
+    my $l2 = int ($level / 1000);
+    print "> $l2 ", $level - $l2 * 1000 + 99, "\n";
+    print "@\n" if $_[0];
     print "@list\n";
 }
 
 read_puzzle or gen_puzzle 1;
-send_puzzle;
+send_puzzle 0;
 print "*$pbx$pby", $pbs? '.': '+', "\n";
 
 sub num_match($$)
@@ -189,9 +195,8 @@ while (<STDIN>) {
     if ($w eq '@') { # new game
 	$x += 0;
 	next if $x < 1 || $x > 5;
-	print "@\n";
 	gen_puzzle $x;
-	send_puzzle;
+	send_puzzle 1;
 	print "*$pbx$pby", $pbs? '.': '+', "\n";
     }
 }
@@ -207,7 +212,7 @@ open O, '>', 'thumb_sudoku.data' or die $!;
 select O;
 print "thumb sudoku data format 1\n";
 print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
-
+print "level $level\n";
 print 'pmv ', join '', @{$pmv}, "\n" if ref $pmv;
 
 my ($i, $tcv);
