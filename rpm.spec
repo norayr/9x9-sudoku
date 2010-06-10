@@ -18,7 +18,7 @@ URL: http://www.iki.fi/too/sw/
  A Sudoku Game playable with fingers (ymmv).
 
 %prep
-#%setup
+%setup
 
 %build
 make
