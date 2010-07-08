@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Sat 10 Apr 2010 14:24:02 EEST too
+# Last modified: Thu 08 Jul 2010 23:26:17 EEST too
 
 use strict;
 use warnings;
@@ -180,6 +180,7 @@ while (<STDIN>) {
 		}
 		next;
 	    }
+	    next if $v > 0 && $bv != 0;
 	}
 	if ($bv != 0 && ! number_fit $x, $y) {
 	    if (ref $v) {
