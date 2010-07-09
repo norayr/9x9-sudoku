@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Sat 10 Apr 2010 14:12:51 EEST too
+ * Last modified: Fri 09 Jul 2010 20:46:40 EEST too
  */
 
 #include <string.h>
@@ -68,6 +68,7 @@ struct {
     GIOChannel * iochannel;
     bool idlehandler;
     char bmsg[80];
+    char tmsg[80];
 } G;
 
 /* widgets (and such)*/
@@ -241,18 +242,28 @@ void draw_button(int ax, int ay)
     draw_char(x, y, T.buttons[ax][ay].value);
 }
 
-void draw_bmsg()
+void draw_msg(char * msg, int x, int y) // + align...
 {
-    dfc0(("draw_bmsg() msg = '%s'\n", G.bmsg));
+    dfc0(("draw_msg() msg = '%s'\n", msg));
 
     pango_layout_set_font_description(W.layout, W.fd2);
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(W.renderer), W.gc_white);
 
-    pango_layout_set_text(W.layout, G.bmsg, strlen(G.bmsg) );
+    pango_layout_set_text(W.layout, msg, strlen(msg) );
 
     // XXX calculate length of output for x position, later.
     pango_renderer_draw_layout(W.renderer, W.layout,
-			       400 * PANGO_SCALE, 712 * PANGO_SCALE);
+			       x * PANGO_SCALE, y * PANGO_SCALE);
+}
+
+void draw_bmsg(void)
+{
+    draw_msg(G.bmsg, 400, 712);
+}
+
+void draw_tmsg(void)
+{
+    draw_msg(G.tmsg, 400, 112);
 }
 
 const char * get_token(char ** strp, int * lenp)
@@ -321,6 +332,7 @@ void handle_line(char * stri, int len)
 	    stri[len - 1] = '\0';
 	    strncpy(G.bmsg, stri + 1, sizeof G.bmsg);
 	    G.bmsg[sizeof G.bmsg - 1] = 0;
+	    draw_bmsg();
 	    return; // eat full line
 	case '@': // clear
 	    init_tables();
@@ -461,7 +473,7 @@ void render_text(int x, int y, PangoFontDescription * fd, GdkGC * gc, char * t)
 
 gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 {
-    (void)e; (void)user_data;
+    (void)w; (void)e; (void)user_data;
 
     int i;
     int j;
@@ -469,7 +481,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     dfc(("exposed\n"));
 #if MAEMO
     if (! is_portrait() )
-	return;
+	return true;
 #else
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
@@ -553,10 +565,15 @@ void save_and_quit(void)
     gtk_main_quit();
 }
 
-
+#if MAEMO
+void new_game_chosen(void * uu, char * data)
+{
+    (void)uu;
+    fdprintf1k(G.lr.fd, "@ %d\n", data - (char*)0);
+}
+#else
 void new_game_clicked(void)
 {
-#if 1
 #define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
     GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
 						W.mainwin, DIALOGFLAGS,
@@ -567,22 +584,25 @@ void new_game_clicked(void)
     if (rv >= 1 && rv <= 5)
 	fdprintf1k(G.lr.fd, "@ %d\n", rv);
     gtk_widget_destroy(d);
-#else
-	fdprintf1k(G.lr.fd, "@\n");
-#endif
 }
-
+#endif
 
 /* make functions clear_menu() and append_menu() */
 GtkWidget * make_menu(void)
 {
 #if MAEMO
+    int i = 0;
     HildonAppMenu * menu = HILDON_APP_MENU(hildon_app_menu_new());
-    GtkWidget *button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
-    gtk_button_set_label(GTK_BUTTON(button), "New Game");
-    g_signal_connect_after(button, "clicked",
-			   G_CALLBACK(new_game_clicked), null);
-    hildon_app_menu_append (menu, GTK_BUTTON(button));
+    for (i = 0; i <= 5; i++) {
+	char label[12];
+	if (i)	sprintf(label, "- %d -\n", i);
+	else	sprintf(label, "<-");
+	GtkWidget *button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+	gtk_button_set_label(GTK_BUTTON(button), label);
+	g_signal_connect_after(button, "clicked",
+			       G_CALLBACK(new_game_chosen), (char*)0 + i);
+	hildon_app_menu_append (menu, GTK_BUTTON(button));
+    }
     gtk_widget_show_all(GTK_WIDGET(menu));
 #else
     GtkBox * menu = GTK_BOX(gtk_hbox_new(false, 0));
@@ -608,7 +628,7 @@ void buildgui(void)
     W.mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
-    gtk_window_set_title(GTK_WINDOW(W.mainwin), "Thumb Sudoku");
+    gtk_window_set_title(GTK_WINDOW(W.mainwin), "Thmb Sudoku");
     g_signal_connect(G_OBJECT(W.mainwin), "delete_event",
                      G_CALLBACK(save_and_quit), null);
 
