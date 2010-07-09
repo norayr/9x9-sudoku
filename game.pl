@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Thu 08 Jul 2010 23:26:17 EEST too
+# Last modified: Fri 09 Jul 2010 21:30:40 EEST too
 
 use strict;
 use warnings;
@@ -20,6 +20,7 @@ my ($pbx, $pby) = (4, 1); # button x&y, for reset.
 my $pbs = 0; # button state
 my $bv = 0; # button value
 my $level = 0;
+my $time = time;
 
 my (@table, $pmx, $pmy, $pmv);
 sub init_puzzle() 
@@ -66,6 +67,7 @@ sub read_puzzle()
 	elsif ($key eq 'pmx') { $pmx = $val + 0; }
 	elsif ($key eq 'pmy') { $pmy = $val + 0; }
 	elsif ($key eq 'level') { $level = $val + 0; }
+	elsif ($key eq 'time') { $time = time - $val; }
 	elsif ($key eq 'pmv') { $pmv = asp $val; }
     }
     return 1;
@@ -85,6 +87,26 @@ sub gen_puzzle($)
 	$table[$i / 9][$i % 9] = 0 - $_;
 	$i++;
     }
+    $time = time;
+}
+
+sub clear_puzzle()
+{
+    for (my $i = 0; $i < 9; $i++) {
+	for (my $j = 0; $j < 9; $j++) {
+	    my $v = $table[$i][$j];
+	    $table[$i][$j] = 0, next if ref $v || $v > 0;
+	}
+    }
+    $time = time;
+}
+
+sub send_time()
+{
+    my $m = time - $time;
+    my $s = $m % 60;
+    $m = $m / 60;
+    printf "^ %7d:%02d\n", $m, $s;
 }
 
 sub send_puzzle($)
@@ -109,6 +131,7 @@ sub send_puzzle($)
 read_puzzle or gen_puzzle 1;
 send_puzzle 0;
 print "*$pbx$pby", $pbs? '.': '+', "\n";
+send_time;
 
 sub num_match($$)
 {
@@ -193,14 +216,15 @@ while (<STDIN>) {
 	print "#$x$y+$bv\n";
 	$table[$x][$y] = $bv;
     }
-    if ($w eq '@') { # new game
+    elsif ($w eq '@') { # new game
 	$x += 0;
-	next if $x < 1 || $x > 5;
-	gen_puzzle $x;
+	next if $x < 0 || $x > 5;
+	if ($x == 0) {	clear_puzzle; }
+	else {		gen_puzzle $x; }
 	send_puzzle 1;
 	print "*$pbx$pby", $pbs? '.': '+', "\n";
     }
-}
+} continue { send_time; }
 
 # write puzzle after eof.
 
@@ -213,7 +237,7 @@ open O, '>', 'thumb_sudoku.data' or die $!;
 select O;
 print "thumb sudoku data format 1\n";
 print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
-print "level $level\n";
+print "level $level\n", 'time ', time - $time, "\n";
 print 'pmv ', join '', @{$pmv}, "\n" if ref $pmv;
 
 my ($i, $tcv);

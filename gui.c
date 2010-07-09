@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 09 Jul 2010 20:46:40 EEST too
+ * Last modified: Fri 09 Jul 2010 21:41:35 EEST too
  */
 
 #include <string.h>
@@ -263,7 +263,8 @@ void draw_bmsg(void)
 
 void draw_tmsg(void)
 {
-    draw_msg(G.tmsg, 400, 112);
+    gdk_draw_rectangle(W.drawable, W.gc_black, true, 330, 12, 144, 28);
+    draw_msg(G.tmsg, 330, 12);
 }
 
 const char * get_token(char ** strp, int * lenp)
@@ -328,11 +329,17 @@ void handle_line(char * stri, int len)
 	    }
 	    draw_button(x, y);
 	    break;
-	case '>': // new message at bottom right, clear follows...
+	case '>': // new message at bottom right, clear follows (does it ?)
 	    stri[len - 1] = '\0';
 	    strncpy(G.bmsg, stri + 1, sizeof G.bmsg);
 	    G.bmsg[sizeof G.bmsg - 1] = 0;
 	    draw_bmsg();
+	    return; // eat full line
+	case '^': // new message at top right
+	    stri[len - 1] = '\0';
+	    strncpy(G.tmsg, stri + 1, sizeof G.tmsg);
+	    G.tmsg[sizeof G.tmsg - 1] = 0;
+	    draw_tmsg();
 	    return; // eat full line
 	case '@': // clear
 	    init_tables();
@@ -577,11 +584,12 @@ void new_game_clicked(void)
 #define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
     GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
 						W.mainwin, DIALOGFLAGS,
-						"1", 1, "2", 2, "3", 3,
-						"4", 4, "5", 5, null);
+						"<-", 0, "- 1 -", 1,
+						"- 2 -", 2, "- 3 -", 3,
+						"- 4 -", 4, "- 5 -", 5, null);
 #undef DIALOFFLAGS
     int rv = gtk_dialog_run(d);
-    if (rv >= 1 && rv <= 5)
+    if (rv >= 0 && rv <= 5)
 	fdprintf1k(G.lr.fd, "@ %d\n", rv);
     gtk_widget_destroy(d);
 }
@@ -595,7 +603,7 @@ GtkWidget * make_menu(void)
     HildonAppMenu * menu = HILDON_APP_MENU(hildon_app_menu_new());
     for (i = 0; i <= 5; i++) {
 	char label[12];
-	if (i)	sprintf(label, "- %d -\n", i);
+	if (i)	sprintf(label, "- %d -", i);
 	else	sprintf(label, "<-");
 	GtkWidget *button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
 	gtk_button_set_label(GTK_BUTTON(button), label);
