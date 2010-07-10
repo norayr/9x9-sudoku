@@ -1,11 +1,12 @@
-thumb-sudoku (0.6-14) unstable; urgency=low
+thumb-sudoku (1.0) unstable; urgency=low
 
   * 5 puzzle levels, 900 puzzles per level.
   * Show level info.
   * Don't allow overwriting numbers (by accident).
   * Show elapsed time.
+  * New (desktop) icons.
 	
- -- Tomi Ollila <tomi.ollila@iki.fi>  Thu, 08 Jul 2010 23:30:11 +0200
+ -- Tomi Ollila <tomi.ollila@iki.fi>  Sat, 10 Jul 2010 21:16:00 +0300
 
 thumb-sudoku (0.6) unstable; urgency=low
 
