@@ -1,3 +1,12 @@
+9x9-sudoku (1.1)  unstable; urgency=low
+
+   * Renamed to 9x9 sudoku (for i18n: language neutral)
+   * Changed icons
+   * Changed difficulty levels from 1-5 to start (* - *****)
+   * Fixed showing of elapsed time when bringing game to front.
+	
+ -- Tomi Ollila <tomi.ollila@iki.fi>  Mon, 19 Jul 2010 20:47:38 +0300
+
 thumb-sudoku (1.0) unstable; urgency=low
 
   * 5 puzzle levels, 900 puzzles per level.

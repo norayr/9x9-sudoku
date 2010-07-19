@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.maemo.thumb_sudoku
-Exec=/opt/maemo/usr/lib/thumb_sudoku/gui

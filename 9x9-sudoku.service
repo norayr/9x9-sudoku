@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.maemo.9x9_sudoku
+Exec=/opt/maemo/usr/lib/9x9_sudoku/gui

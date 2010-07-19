@@ -1,5 +1,5 @@
 #!/bin/sh
 
-INSTBIN=/opt/maemo/usr/lib/thumb_sudoku
+INSTBIN=/opt/9x9_sudoku
 
 chmod 755 "$INSTBIN"/gui "$INSTBIN"/game.pl

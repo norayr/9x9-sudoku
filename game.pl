@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Fri 09 Jul 2010 21:30:40 EEST too
+# Last modified: Mon 19 Jul 2010 20:44:28 EEST too
 
 use strict;
 use warnings;
@@ -36,9 +36,9 @@ sub init_puzzle()
 sub read_puzzle()
 {
     init_puzzle;
-    open I, '<', "$ENV{HOME}/.config/thumb_sudoku.data" or return 0;
+    open I, '<', "$ENV{HOME}/.config/9x9_sudoku.data" or return 0;
     $_ = <I>;
-    return 0 unless /^thumb sudoku data format 1\s/;
+    return 0 unless /^9x9 sudoku data format 1\s/;
 
     sub asp($) {
 	my @a = ( 0, '', '', '', '', '', '', '', '', '');
@@ -233,9 +233,9 @@ unless (-d '.config') {
     mkdir '.config' or die $!;
 }
 chdir '.config';
-open O, '>', 'thumb_sudoku.data' or die $!;
+open O, '>', '9x9_sudoku.data' or die $!;
 select O;
-print "thumb sudoku data format 1\n";
+print "9x9 sudoku data format 1\n";
 print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
 print "level $level\n", 'time ', time - $time, "\n";
 print 'pmv ', join '', @{$pmv}, "\n" if ref $pmv;

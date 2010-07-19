@@ -4,13 +4,13 @@
 %define prefix   /usr
 %define PACKAGE_VERSION  0
 
-Summary: Thumb Sudoku
-Name: thumb_sudoku
+Summary: 9x9 Sudoku
+Name: 9x9_sudoku
 Version: %ver
 Release: %rel
 License: GPL-v2
 Group: Games
-Source: http://www.iki.fi/too/sw/thumb_sudoku
+Source: http://www.iki.fi/too/sw/9x9_sudoku
 BuildRoot: /var/tmp/tsu-%{PACKAGE_VERSION}-root
 URL: http://www.iki.fi/too/sw/
 
@@ -38,6 +38,12 @@ opt/*
 usr/*
 
 %changelog
+9x9-sudoku (1.1) unstable; urgency=low
+
+  * Many changes...
+
+ -- Tomi Ollila <tomi.ollila@iki.fi>  Mon, 01 Mar 2010 16:18:37 +0200
+
 thumb-sudoku (0.6) unstable; urgency=low
 
   * Fixed bug with using hints (those small numbers) (one off-by-one offset).

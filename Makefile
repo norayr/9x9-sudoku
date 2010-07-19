@@ -11,10 +11,10 @@ gui: $(OBJ)
 	FLAGS=`pkg-config --libs gtk+-2.0`\ -DNOTMAEMO; set -x;\
 	gcc -o $@ $(OBJ) $$FLAGS
 
-FILE_PNG = thumb-sudoku.png
+FILE_PNG = 9x9-sudoku.png
 FILE_PNG64 = $(FILE_PNG:%.png=%-64.png)
-FILE_DESKTOP = thumb-sudoku.desktop
-FILE_SERVICE = thumb-sudoku.service
+FILE_DESKTOP = 9x9-sudoku.desktop
+FILE_SERVICE = 9x9-sudoku.service
 
 install_maemo: gui
 	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/64x64/apps
@@ -24,9 +24,8 @@ install_maemo: gui
 	cp $(FILE_DESKTOP) $(DESTDIR)/usr/share/applications/hildon
 	mkdir -p $(DESTDIR)/usr/share/dbus-1/services
 	cp $(FILE_SERVICE) $(DESTDIR)/usr/share/dbus-1/services
-	mkdir -p $(DESTDIR)/opt/maemo/usr/lib/thumb_sudoku
-	cp gui game.pl pzl?.gz \
-		$(DESTDIR)/opt/maemo/usr/lib/thumb_sudoku
+	mkdir -p $(DESTDIR)/opt/9x9-sudoku
+	cp gui game.pl pzl?.gz $(DESTDIR)/opt/9x9-sudoku
 
 gui.o: gui.c tile50.h up64.h down64.h
 	sh $<

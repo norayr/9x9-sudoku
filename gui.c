@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Fri 09 Jul 2010 21:41:35 EEST too
+ * Last modified: Mon 19 Jul 2010 20:54:59 EEST too
  */
 
 #include <string.h>
@@ -489,6 +489,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 #if MAEMO
     if (! is_portrait() )
 	return true;
+    /* XXX send perl stop timer -- and start timer when portrait again */
 #else
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif
@@ -506,6 +507,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 	    draw_button(i, j);
 
     draw_bmsg();
+    draw_tmsg();
     return true;
 }
 
@@ -584,9 +586,9 @@ void new_game_clicked(void)
 #define DIALOGFLAGS GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL
     GtkWidget * d = gtk_dialog_new_with_buttons("New Game",
 						W.mainwin, DIALOGFLAGS,
-						"<-", 0, "- 1 -", 1,
-						"- 2 -", 2, "- 3 -", 3,
-						"- 4 -", 4, "- 5 -", 5, null);
+						"<-", 0, "*", 1,
+						"**", 2, "***", 3,
+						"****", 4, "*****", 5, null);
 #undef DIALOFFLAGS
     int rv = gtk_dialog_run(d);
     if (rv >= 0 && rv <= 5)
@@ -636,7 +638,7 @@ void buildgui(void)
     W.mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
-    gtk_window_set_title(GTK_WINDOW(W.mainwin), "Thmb Sudoku");
+    gtk_window_set_title(GTK_WINDOW(W.mainwin), "9x9 Sudoku");
     g_signal_connect(G_OBJECT(W.mainwin), "delete_event",
                      G_CALLBACK(save_and_quit), null);
 
@@ -698,7 +700,7 @@ int main(int argc, char * argv[])
 #if MAEMO
     /* osso... */
     osso_context_t *
-        osso_context = osso_initialize("org.maemo.thumb_sudoku","1.0",1,null);
+        osso_context = osso_initialize("org.maemo.9x9_sudoku","1.0",1,null);
 #endif
     buildgui();
 
