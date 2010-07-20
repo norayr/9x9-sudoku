@@ -14,6 +14,7 @@ Provides: 9x9-sudoku
 Replaces: thumb-sudoku
 Description: 9x9 Sudoku
  A Sudoku Game playable with fingers (ymmv).
+XSBC-Bugtracker: mailto:tomi.ollila@iki.fi
 XB-Maemo-Icon-26:
 iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A
 /wD/oL2nkwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAAd0SU1FB9oHExEVDzUTg0oAAAAZdEVYdENv
