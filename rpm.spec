@@ -5,7 +5,7 @@
 %define PACKAGE_VERSION  0
 
 Summary: 9x9 Sudoku
-Name: 9x9_sudoku
+Name: 9x9 sudoku
 Version: %ver
 Release: %rel
 License: GPL-v2

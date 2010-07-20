@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 20 Jul 2010 17:36:12 EEST too
+ * Last modified: Tue 20 Jul 2010 18:08:43 EEST too
  */
 
 #include <string.h>
@@ -614,9 +614,10 @@ GtkWidget * make_menu(void)
     int i = 0;
     HildonAppMenu * menu = HILDON_APP_MENU(hildon_app_menu_new());
     for (i = 0; i <= 5; i++) {
-	char label[12];
-	if (i)	sprintf(label, "- %d -", i);
-	else	sprintf(label, "<-");
+	const char stars[] = "*****";
+	char * label;
+	if (i)	label = stars + (5 - i);
+	else	label = "<-";
 	GtkWidget *button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
 	gtk_button_set_label(GTK_BUTTON(button), label);
 	g_signal_connect_after(button, "clicked",
@@ -710,7 +711,7 @@ int main(int argc, char * argv[])
 #if MAEMO
     /* osso... */
     osso_context_t *
-        osso_context = osso_initialize("org.maemo.9x9_sudoku","1.0",1,null);
+        osso_context = osso_initialize("org.maemo._9x9_sudoku","1.0",1,null);
 #endif
     buildgui();
 

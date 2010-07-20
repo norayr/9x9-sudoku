@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Tue 20 Jul 2010 17:16:44 EEST too
+# Last modified: Tue 20 Jul 2010 17:55:04 EEST too
 
 use strict;
 use warnings;
@@ -36,7 +36,7 @@ sub init_puzzle()
 sub read_puzzle()
 {
     init_puzzle;
-    open I, '<', "$ENV{HOME}/.config/9x9_sudoku.data" or return 0;
+    open I, '<', "$ENV{HOME}/.config/9x9-sudoku.data" or return 0;
     $_ = <I>;
     return 0 unless /^9x9 sudoku data format 1\s/;
 
@@ -240,7 +240,7 @@ unless (-d '.config') {
     mkdir '.config' or die $!;
 }
 chdir '.config';
-open O, '>', '9x9_sudoku.data' or die $!;
+open O, '>', '9x9-sudoku.data' or die $!;
 select O;
 print "9x9 sudoku data format 1\n";
 print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
