@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Tue 20 Jul 2010 17:06:10 EEST too
+ * Last modified: Tue 20 Jul 2010 17:36:12 EEST too
  */
 
 #include <string.h>
@@ -497,7 +497,7 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
     else {
 	if (G.stoptime) {
 	    fdprintf1k(G.lr.fd, "- %u\n", G.stoptime);
-	    G,stoptime = 0;
+	    G.stoptime = 0;
 	}
     }
 #else
