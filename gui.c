@@ -20,7 +20,7 @@
  *	    All rights reserved
  *
  * Created: Tue 26 Jan 2010 18:12:50 EET too
- * Last modified: Mon 19 Jul 2010 20:54:59 EEST too
+ * Last modified: Tue 20 Jul 2010 17:06:10 EEST too
  */
 
 #include <string.h>
@@ -69,6 +69,9 @@ struct {
     bool idlehandler;
     char bmsg[80];
     char tmsg[80];
+#if MAEMO
+    time_t stoptime;
+#endif
 } G;
 
 /* widgets (and such)*/
@@ -487,9 +490,16 @@ gboolean darea_expose(GtkWidget * w, GdkEventExpose * e, gpointer user_data)
 
     dfc(("exposed\n"));
 #if MAEMO
-    if (! is_portrait() )
+    if (! is_portrait() ) {
+	G.stoptime = time(NULL);
 	return true;
-    /* XXX send perl stop timer -- and start timer when portrait again */
+    }
+    else {
+	if (G.stoptime) {
+	    fdprintf1k(G.lr.fd, "- %u\n", G.stoptime);
+	    G,stoptime = 0;
+	}
+    }
 #else
     gdk_draw_rectangle(w->window, W.gc_black, true, 0, 0, DA_WIDTH, DA_HEIGHT);
 #endif

@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 30 Jan 2010 20:16:55 EET too
-# Last modified: Mon 19 Jul 2010 20:44:28 EEST too
+# Last modified: Tue 20 Jul 2010 17:16:44 EEST too
 
 use strict;
 use warnings;
@@ -224,6 +224,13 @@ while (<STDIN>) {
 	send_puzzle 1;
 	print "*$pbx$pby", $pbs? '.': '+', "\n";
     }
+    elsif ($w eq '-') { # active again, stop time
+	my $ct = time;
+	next if $ct < $x;
+	my $t = $ct - $x;
+	next if $t > $ct - $time;
+	$time += $t;
+    }
 } continue { send_time; }
 
 # write puzzle after eof.
@@ -237,7 +244,8 @@ open O, '>', '9x9_sudoku.data' or die $!;
 select O;
 print "9x9 sudoku data format 1\n";
 print "pbx $pbx\n", "pby $pby\n", "bv $bv\n", "pmx $pmx\n", "pmy $pmy\n";
-print "level $level\n", 'time ', time - $time, "\n";
+$time = time - $time; $time = 0 if $time < 0 or $time > 1e8;
+print "level $level\n", 'time ', $time, "\n";
 print 'pmv ', join '', @{$pmv}, "\n" if ref $pmv;
 
 my ($i, $tcv);
