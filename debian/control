@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 
 Package: 9x9-sudoku
 Section: user/games
-Architecture: armel
+Architecture: any
 Depends: perl-base (>= 5.6)
 Provides: 9x9-sudoku
 Conflicts: thumb-sudoku (<< 1.1)
