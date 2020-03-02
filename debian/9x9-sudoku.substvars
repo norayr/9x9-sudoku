@@ -1,3 +1,0 @@
-shlibs:Depends=libc6 (>= 2.3), libglib2.0-0 (>= 2.16.0), libgtk2.0-0 (>= 2.8.0), libhildon1, libosso1, libpango-1.0-0 (>= 1.14.0)
-misc:Depends=
-misc:Pre-Depends=
